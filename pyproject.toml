@@ -1,0 +1,40 @@
+[project]
+name = "dataclass_array"
+description = "Dataclasses that behave like numpy arrays (with indexing, slicing, vectorization)."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+authors = [{name = "dataclass_array team", email="dataclass_array@google.com"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Science/Research",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["dataclass", "dataclasses", "numpy", "jax", "tensorflow", "array"]
+
+# pip dependencies of the project
+dependencies = []
+
+# This is set automatically by flit using `dataclass_array.__version__`
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://github.com/google-research/dataclass_array"
+repository = "https://github.com/google-research/dataclass_array"
+# Other: `documentation`, `changelog`
+
+[project.optional-dependencies]
+# Development deps (unittest, linting, formating,...)
+# Installed through `pip install .[dev]`
+dev = [
+    "pytest",
+    "pytest-xdist",
+    "pylint>=2.6.0",
+    "yapf",
+]
+
+[build-system]
+requires = ["flit_core >=3.5,<4"]
+build-backend = "flit_core.buildapi"

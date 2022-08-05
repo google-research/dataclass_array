@@ -1,3 +1,3 @@
-# dataclass_array
+# Dataclass Array
 
 *This is not an official Google product*
