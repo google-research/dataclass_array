@@ -15,7 +15,13 @@ classifiers = [
 keywords = ["dataclass", "dataclasses", "numpy", "jax", "tensorflow", "array"]
 
 # pip dependencies of the project
-dependencies = []
+dependencies = [
+    "einops",
+    "etils[edc,enp,epath,epy,etree]",
+    "lark",
+    "numpy",
+    "typing_extensions",
+]
 
 # This is set automatically by flit using `dataclass_array.__version__`
 dynamic = ["version"]
@@ -33,6 +39,10 @@ dev = [
     "pytest-xdist",
     "pylint>=2.6.0",
     "yapf",
+    # Lazy deps
+    "chex",
+    "jax[cpu]",
+    "tf-nightly",
 ]
 
 [build-system]
