@@ -91,7 +91,8 @@ def get_inner_shape(shape_str: str) -> _Shape:
   # TODO(epot): Support `_` & `None` dim
   if not shape or not isinstance(shape[0], _VarDim):
     raise ValueError(
-        'Shape should start by `...` or `*shape` (e.g. `f32[\'*shape 3\']`)')
+        f'Shape {shape_str!r} should start by `...` or `*shape` (e.g. '
+        '`f32[\'*shape 3\']`)')
 
   inner_shape = shape[1:]
   if not all(isinstance(dim, (int, type(None))) for dim in inner_shape):

@@ -86,7 +86,7 @@ def test_get_inner_shape(shape_str, shape_tuple):
     ],
 )
 def test_get_inner_shape_failure_first_dim(shape_str: str):
-  with pytest.raises(ValueError, match='Shape should start'):
+  with pytest.raises(ValueError, match='Shape .* should start'):
     shape_parsing.get_inner_shape(shape_str)
 
 

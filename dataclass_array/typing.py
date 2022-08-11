@@ -17,14 +17,17 @@
 from __future__ import annotations
 
 import typing
-from typing import Tuple, Type, TypeVar, Union
+from typing import Any, Optional, Tuple, Type, TypeVar, Union
 
 from etils.array_types import FloatArray
 
 if typing.TYPE_CHECKING:
   from dataclass_array import array_dataclass
 
+TypeAlias = Any
+
 Shape = Tuple[int, ...]
+DynamicShape = Tuple[Optional[int], ...]
 # One or multiple axis. `None` indicate all axes. This is the type of
 # .mean(axis=...)
 Axes = Union[None, Shape, int]

@@ -77,15 +77,18 @@ A `DataclassArray` has 2 types of fields:
 class MyArray(dca.DataclassArray):
   # Array fields
   a: FloatArray['*batch_shape 3']  # Defined by `etils.array_types`
-  b: Ray  # Nested DataclassArray (inner shape == `()`)
+  b: FloatArray['*batch_shape _ _']  # Dynamic shape
+  c: Ray  # Nested DataclassArray (equivalent to `Ray['*batch_shape']`)
+  d: Ray['*batch_shape 6']
 
   # Array fields explicitly defined
-  c: Any = dca.field(shape=(3,), dtype=np.float32)
-  d: Ray = dca.field(shape=(3,), dtype=Ray)  # Nested DataclassArray
+  e: Any = dca.field(shape=(3,), dtype=np.float32)
+  f: Any = dca.field(shape=(None,  None), dtype=np.float32)  # Dynamic shape
+  g: Ray = dca.field(shape=(3,), dtype=Ray)  # Nested DataclassArray
 
   # Static field (everything not defined as above)
-  e: float
-  f: np.array
+  static0: float
+  static1: np.array
 ```
 
 ### Vectorization

@@ -23,10 +23,12 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Added: Syntax to specify the shape of the DataclassArray (e.g. `MyRay['h
+    w']`).
+
 ## [1.0.0] - 2022-08-08
 
 *   Initial release
-
 
 [Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/google-research/dataclass_array/compare/v0.1.0...v1.0.0

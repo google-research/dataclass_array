@@ -56,7 +56,7 @@ class Isometrie(dca.DataclassArray):
 class Nested(dca.DataclassArray):
   # pytype: disable=annotation-type-mismatch
   iso: Isometrie
-  iso_batched: Isometrie = dca.field(shape=(3, 7), dtype=Isometrie)
+  iso_batched: Isometrie['*batch_shape 3 7']
   pt: Point = dca.field(shape=(3,), dtype=Point)
   # pytype: enable=annotation-type-mismatch
 
@@ -645,3 +645,12 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
         x=xnp.zeros(batch_shape + (2, 3), dtype=np.float32),
         y=xnp.zeros(batch_shape + (2, 1), dtype=np.int32),  # < 2 != 3
     )
+
+
+def test_class_getitem():
+  assert Point == Point  # pylint: disable=comparison-with-itself
+  assert Point[''] == Point['']
+  assert Point['h w'] == Point['h w']
+  assert Point[''] != Point
+  assert Point[''] != Point['h w']
+  assert Point[''] != Isometrie['']

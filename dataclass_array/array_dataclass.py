@@ -20,9 +20,10 @@ import dataclasses
 import typing
 from typing import Any, Callable, ClassVar, Generic, Iterator, Optional, Tuple, Type, TypeVar, Union
 
+from dataclass_array import field_utils
 from dataclass_array import shape_parsing
 from dataclass_array import type_parsing
-from dataclass_array.typing import Axes, DcOrArray, DcOrArrayT, DTypeArg, Shape  # pylint: disable=g-multiple-import
+from dataclass_array.typing import Axes, DcOrArray, DcOrArrayT, DTypeArg, DynamicShape, Shape  # pylint: disable=g-multiple-import
 from dataclass_array.utils import np_utils
 from dataclass_array.utils import py_utils
 import einops
@@ -32,7 +33,8 @@ from etils import enp
 from etils import epy
 from etils.array_types import Array
 import numpy as np
-from typing_extensions import Literal, TypeAlias  # pylint: disable=g-multiple-import
+import typing_extensions
+from typing_extensions import Annotated, Literal, TypeAlias  # pylint: disable=g-multiple-import
 
 
 lazy = enp.lazy
@@ -65,7 +67,16 @@ class DataclassParams:
   cast_list: bool = True
 
 
-class DataclassArray:
+class MetaDataclassArray(type):
+  """DataclassArray metaclass."""
+
+  # TODO(b/204422756): We cannot use `__class_getitem__` due to b/204422756
+  def __getitem__(cls, spec):
+    # Not clear how this would interact if cls is also a `Generic`
+    return Annotated[cls, field_utils.ShapeAnnotation(spec)]
+
+
+class DataclassArray(metaclass=MetaDataclassArray):
   """Dataclass which behaves like an array.
 
   Usage:
@@ -385,7 +396,7 @@ class DataclassArray:
     if cls._dca_fields_metadata is None:  # pylint: disable=protected-access
       # At this point, `ForwardRef` should have been resolved.
       try:
-        hints = typing.get_type_hints(cls)
+        hints = typing_extensions.get_type_hints(cls, include_extras=True)
       except Exception as e:  # pylint: disable=broad-except
         epy.reraise(
             e,
@@ -706,7 +717,7 @@ class _ArrayFieldMetadata:
     dtype: Type of the array. Can be `array_types.dtypes.DType` or
       `dca.DataclassArray` for nested arrays.
   """
-  inner_shape_non_static: Shape
+  inner_shape_non_static: DynamicShape
   dtype: Union[array_types.dtypes.DType, type[DataclassArray]]
 
   def __post_init__(self):
@@ -739,7 +750,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     host: Dataclass instance who this field is attached too
   """
   name: str
-  host: DataclassArray
+  host: DataclassArray = dataclasses.field(repr=False)
 
   @property
   def qualname(self) -> str:
@@ -851,18 +862,18 @@ def _make_field_metadata(
 def _type_to_field_metadata(hint: TypeAlias) -> Optional[_ArrayFieldMetadata]:
   """Converts type hint to extract `inner_shape`, `dtype`."""
   array_type = type_parsing.get_array_type(hint)
-  if isinstance(array_type, type) and issubclass(array_type, DataclassArray):
-    # TODO(epot): Should support `ray: Ray[..., 3]` ?
-    return _ArrayFieldMetadata(inner_shape_non_static=(), dtype=array_type)
+
+  if isinstance(array_type, field_utils.DataclassWithShape):
+    dtype = array_type.cls
   elif isinstance(array_type, array_types.ArrayAliasMeta):
-    assert array_type is not None
-    try:
-      return _ArrayFieldMetadata(
-          inner_shape_non_static=shape_parsing.get_inner_shape(
-              array_type.shape),
-          dtype=array_type.dtype,
-      )
-    except Exception as e:  # pylint: disable=broad-except
-      epy.reraise(e, prefix=f'Invalid shape annotation {hint}.')
+    dtype = array_type.dtype
   else:  # Not a supported type: Static field
     return None
+
+  try:
+    return _ArrayFieldMetadata(
+        inner_shape_non_static=shape_parsing.get_inner_shape(array_type.shape),
+        dtype=dtype,
+    )
+  except Exception as e:  # pylint: disable=broad-except
+    epy.reraise(e, prefix=f'Invalid shape annotation {hint}.')

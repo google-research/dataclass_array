@@ -22,10 +22,11 @@ import typing
 from typing import Any, Callable, Optional
 
 from dataclass_array import array_dataclass
+from dataclass_array import field_utils
+from dataclass_array.typing import TypeAlias
 from etils import array_types as array_types_lib
 import typing_extensions  # TODO(py38): Remove
 
-TypeAlias = Any  # TODO(py39): Use real alias once 3.7 is dropped.
 _LeafFn = Callable[[TypeAlias], None]
 
 _NoneType = type(None)
@@ -74,15 +75,15 @@ def _get_leaf_types(hint: TypeAlias) -> list[type[Any]]:
   return all_types
 
 
-def get_array_type(hint: TypeAlias) -> Optional[type[Any]]:
+def get_array_type(hint: TypeAlias) -> Optional[Any]:
   """Returns the array type, or `None` if no type was detected.
 
   Example:
 
   ```python
   get_array_type(f32[..., 3]) -> f32[..., 3]
-  get_array_type(dca.Ray) -> dca.Ray
-  get_array_type(Optional[dca.Ray]) -> dca.Ray
+  get_array_type(dca.Ray) -> dca.Ray['...']
+  get_array_type(Optional[dca.Ray]) -> dca.Ray['...']
   get_array_type(dca.Ray | dca.Camera | None) -> dca.DataclassArray
   get_array_type(Any) -> None  # Any not an array type
   get_array_type(dca.Ray | int) -> None  # int not an array type
@@ -106,9 +107,8 @@ def get_array_type(hint: TypeAlias) -> Optional[type[Any]]:
   array_types = []
   other_types = []
   for leaf in leaf_types:
-    if (isinstance(leaf, type) and
-        issubclass(leaf, array_dataclass.DataclassArray)):
-      dc_types.append(leaf)
+    if field_utils.DataclassWithShape.is_dca(leaf):
+      dc_types.append(field_utils.DataclassWithShape.from_hint(leaf))
     elif isinstance(leaf, array_types_lib.ArrayAliasMeta):
       array_types.append(leaf)
     else:
@@ -122,7 +122,17 @@ def get_array_type(hint: TypeAlias) -> Optional[type[Any]]:
         'this feature.')
   if dc_types:
     if len(dc_types) > 1:
-      return array_dataclass.DataclassArray
+      # Validate the inner shape
+      common_shapes = {x.shape for x in dc_types}
+      if len(common_shapes) != 1:
+        raise NotImplementedError(
+            f'{hint} mix dataclass with different inner shape. Please open an '
+            'issue if you need this feature.')
+      (common_shape,) = common_shapes
+      return field_utils.DataclassWithShape(
+          cls=array_dataclass.DataclassArray,
+          shape=common_shape,
+      )
     else:
       return dc_types[0]
   if array_types:
