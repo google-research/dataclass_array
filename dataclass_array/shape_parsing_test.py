@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from dataclass_array import shape_parsing
-from etils.array_types import f32
+from dataclass_array.typing import f32
 import pytest
 
 

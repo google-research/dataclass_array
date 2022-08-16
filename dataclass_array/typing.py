@@ -19,10 +19,39 @@ from __future__ import annotations
 import typing
 from typing import Any, Optional, Tuple, Type, TypeVar, Union
 
+from etils import enp
 from etils.array_types import FloatArray
 
 if typing.TYPE_CHECKING:
   from dataclass_array import array_dataclass
+
+# ======== Array types (alias of `enp.typing`) ========
+
+ArrayAliasMeta = enp.typing.ArrayAliasMeta
+ArrayLike = enp.typing.ArrayLike
+
+Array = enp.typing.Array
+FloatArray = enp.typing.FloatArray
+IntArray = enp.typing.IntArray
+BoolArray = enp.typing.BoolArray
+StrArray = enp.typing.StrArray
+
+ui8 = enp.typing.ui8
+ui16 = enp.typing.ui16
+ui32 = enp.typing.ui32
+ui64 = enp.typing.ui64
+i8 = enp.typing.i8
+i16 = enp.typing.i16
+i32 = enp.typing.i32
+i64 = enp.typing.i64
+f16 = enp.typing.f16
+f32 = enp.typing.f32
+f64 = enp.typing.f64
+complex64 = enp.typing.complex64
+complex128 = enp.typing.complex128
+bool_ = enp.typing.bool_
+
+# ======== Dataclass array specific types ========
 
 TypeAlias = Any
 

@@ -21,7 +21,7 @@ import functools
 from typing import Any, Optional
 
 from dataclass_array import array_dataclass
-from etils.array_types import FloatArray  # pylint: disable=g-multiple-import
+from dataclass_array.typing import FloatArray  # pylint: disable=g-multiple-import
 from etils.etree import jax as etree
 from etils.etree import Tree
 import numpy as np

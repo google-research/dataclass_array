@@ -20,9 +20,9 @@ import dataclasses
 from typing import Any, Callable
 
 import dataclass_array as dca
+from dataclass_array.typing import FloatArray, IntArray, f32, i32  # pylint: disable=g-multiple-import
 from dataclass_array.typing import Shape  # pylint: disable=g-multiple-import
 from etils import enp
-from etils.array_types import FloatArray, IntArray, f32, i32  # pylint: disable=g-multiple-import
 import numpy as np
 import pytest
 import tensorflow as tf

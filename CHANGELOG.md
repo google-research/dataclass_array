@@ -23,13 +23,19 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+## [1.1.0] - 2022-08-15
+
+*   Added: Array types can be imported directly from `dataclass_array.typing`
 *   Added: Syntax to specify the shape of the DataclassArray (e.g. `MyRay['h
     w']`).
+*   Fixed: Correctly forward non-init fields in `.replace`, `tree_map`,
+    `@dca.vectorize_method`
 
 ## [1.0.0] - 2022-08-08
 
 *   Initial release
 
-[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/google-research/dataclass_array/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/google-research/dataclass_array/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/google-research/dataclass_array/releases/tag/v0.1.0
