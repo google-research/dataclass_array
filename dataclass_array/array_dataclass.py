@@ -23,6 +23,7 @@ from typing import Any, Callable, ClassVar, Generic, Iterator, Optional, Set, Tu
 from dataclass_array import field_utils
 from dataclass_array import shape_parsing
 from dataclass_array import type_parsing
+from dataclass_array.typing import Array
 from dataclass_array.typing import Axes, DcOrArray, DcOrArrayT, DTypeArg, DynamicShape, Shape  # pylint: disable=g-multiple-import
 from dataclass_array.utils import np_utils
 from dataclass_array.utils import py_utils
@@ -31,7 +32,6 @@ from etils import array_types
 from etils import edc
 from etils import enp
 from etils import epy
-from etils.array_types import Array
 import numpy as np
 import typing_extensions
 from typing_extensions import Annotated, Literal, TypeAlias  # pylint: disable=g-multiple-import

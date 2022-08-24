@@ -21,7 +21,7 @@ from typing import Optional, List, Union
 
 import dataclass_array as dca
 from dataclass_array import type_parsing
-from etils.array_types import f32, FloatArray  # pylint: disable=g-multiple-import
+from dataclass_array.typing import f32, FloatArray  # pylint: disable=g-multiple-import
 import pytest
 
 

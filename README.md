@@ -20,12 +20,14 @@ To view an example of dataclass arrays used in practice, see
 To create a `dca.DataclassArray`, take a frozen dataclass and:
 
 *   Inherit from `dca.DataclassArray`
-*   Annotate the fields with `etils.array_types` to specify the inner shape and
-    dtype of the array (see below for static or nested dataclass fields).
+*   Annotate the fields with `dataclass_array.typing` to specify the inner shape
+    and dtype of the array (see below for static or nested dataclass fields).
+    The array types are an alias from
+    [`etils.array_types`](https://github.com/google/etils/blob/main/etils/array_types/README.md).
 
 ```python
 import dataclass_array as dca
-from etils.array_types import FloatArray
+from dataclass_array.typing import FloatArray
 
 
 @dataclasses.dataclass(frozen=True)
@@ -145,8 +147,8 @@ For example, with `__matmul__(self, x: T) -> T`:
 (a, *x) @ (b, *x) -> Error: Incompatible a != b
 ```
 
-To test on Colab, see the `visu3d`
-dataclass [Colab tutorial](https://colab.research.google.com/github/google-research/visu3d/blob/main/docs/dataclass.ipynb).
+To test on Colab, see the `visu3d` dataclass
+[Colab tutorial](https://colab.research.google.com/github/google-research/visu3d/blob/main/docs/dataclass.ipynb).
 
 ## Motivating examples
 

@@ -20,10 +20,10 @@ import dataclasses
 
 import dataclass_array as dca
 from dataclass_array import vectorization
+from dataclass_array.typing import FloatArray
 from dataclass_array.utils import inspect_utils
 from dataclass_array.utils import np_utils
 from etils import enp
-from etils.array_types import FloatArray
 import jax
 import pytest
 import tensorflow.experimental.numpy as tnp
