@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import dataclasses
 import typing
-from typing import Any, Callable, ClassVar, Generic, Iterator, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, ClassVar, Generic, Iterator, Optional, Set, Tuple, Type, TypeVar, Union
 
 from dataclass_array import field_utils
 from dataclass_array import shape_parsing
@@ -35,7 +35,6 @@ from etils.array_types import Array
 import numpy as np
 import typing_extensions
 from typing_extensions import Annotated, Literal, TypeAlias  # pylint: disable=g-multiple-import
-
 
 lazy = enp.lazy
 
@@ -133,6 +132,11 @@ class DataclassArray(metaclass=MetaDataclassArray):
   # overwrite them.
   __dca_params__: ClassVar[DataclassParams] = DataclassParams()
 
+  # TODO(epot): Could be removed with py3.10 and using `kw_only=True`
+  # Fields defined here will be forwarded with `.replace`
+  # TODO(py39): Replace Set -> set
+  __dca_non_init_fields__: ClassVar[Set[str]] = set()
+
   _shape: Shape
   _xnp: enp.NpModule
 
@@ -147,6 +151,9 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # To avoid costly `typing.get_type_hints` which perform `eval` and `str`
     # convertions, we cache the type annotations here.
     cls._dca_fields_metadata: Optional[dict[str, _ArrayFieldMetadata]] = None
+
+    # Normalize the `cls.__dca_non_init_fields__`
+    cls.__dca_non_init_fields__ = set(cls.__dca_non_init_fields__)
 
   def __post_init__(self) -> None:
     """Validate and normalize inputs."""
@@ -346,8 +353,32 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   # ====== Dataclass/Conversion utils ======
 
-  # TODO(pytype): Could be removed once there's a way of annotating this.
-  replace = edc.dataclass_utils.replace
+  def replace(self: _DcT, **kwargs: Any) -> _DcT:
+    """Alias for `dataclasses.replace`."""
+    init_kwargs = {
+        k: v for k, v in kwargs.items() if k not in self.__dca_non_init_fields__
+    }
+    non_init_kwargs = {
+        k: v for k, v in kwargs.items() if k in self.__dca_non_init_fields__
+    }
+
+    # Create the new object
+    new_self = dataclasses.replace(self, **init_kwargs)
+
+    # Additionally forward the non-init kwargs
+    # `dataclasses.field(init=False) kwargs are required because `init=True`
+    # creates conflicts:
+    # * Inheritance fails with non-default argument 'K' follows default argument
+    # * Pytype complains too
+    # TODO(py310): Cleanup using `dataclass(kw_only)`
+    assert new_self is not self
+    for k in self.__dca_non_init_fields__:
+      if k in non_init_kwargs:
+        v = non_init_kwargs[k]
+      else:
+        v = getattr(self, k)
+      new_self._setattr(k, v)  # pylint: disable=protected-access
+    return new_self
 
   def as_np(self: _DcT) -> _DcT:
     """Returns the instance as containing `np.ndarray`."""
@@ -398,10 +429,12 @@ class DataclassArray(metaclass=MetaDataclassArray):
       try:
         hints = typing_extensions.get_type_hints(cls, include_extras=True)
       except Exception as e:  # pylint: disable=broad-except
-        epy.reraise(
-            e,
-            prefix=f'Could not infer typing annotation of {cls.__name__} '
-            f'defined in {cls.__module__}')
+        msg = (f'Could not infer typing annotation of {cls.__qualname__} '
+               f'defined in {cls.__module__}:\n')
+        lines = [f' * {k}: {v!r}' for k, v in cls.__annotations__.items()]
+        lines = '\n'.join(lines)
+
+        epy.reraise(e, prefix=msg + lines + '\n')
 
       dca_fields_metadata = {
           f.name: _make_field_metadata(f, hints)
@@ -603,11 +636,14 @@ class DataclassArray(metaclass=MetaDataclassArray):
     self = cls(**array_field_kwargs, **init_fields)
     # Currently it's not clear how to handle non-init fields so raise an error
     if non_init_fields:
-      if set(non_init_fields) != {'fig_config'}:
+      if set(non_init_fields) - self.__dca_non_init_fields__:
         raise ValueError(
-            '`dca.DataclassArray` with init=False field not supported yet.')
+            '`dca.DataclassArray` field with init=False should be explicitly '
+            'specified in `__dca_non_init_fields__` for them to be '
+            'propagated by `tree_map`.')
       # TODO(py310): Delete once dataclass supports `kw_only=True`
-      self._setattr('fig_config', non_init_fields['fig_config'])  # pylint: disable=protected-access
+      for k, v in non_init_fields.items():
+        self._setattr(k, v)  # pylint: disable=protected-access
     return self
 
   def _setattr(self, name: str, value: Any) -> None:

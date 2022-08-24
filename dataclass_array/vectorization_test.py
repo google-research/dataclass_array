@@ -16,12 +16,17 @@
 
 from __future__ import annotations
 
+import dataclasses
+
 import dataclass_array as dca
 from dataclass_array import vectorization
 from dataclass_array.utils import inspect_utils
 from dataclass_array.utils import np_utils
 from etils import enp
+from etils.array_types import FloatArray
+import jax
 import pytest
+import tensorflow.experimental.numpy as tnp
 
 H = 2
 W = 3
@@ -141,3 +146,48 @@ def test_broadcast_args_failure(
         bound_args,
         map_non_static=lambda fn, args: args.map(fn),
     )
+
+
+@enp.testing.parametrize_xnp()
+def test_replace_dca(xnp: enp.NpModule):
+
+  # Ensure that the non-init static fields are correctly forwarded.
+
+  @dataclasses.dataclass(frozen=True)
+  class DataclassWithNonInit(dca.DataclassArray):
+    """Dataclass with a non-init (static) field."""
+    __dca_non_init_fields__ = ('x',)
+
+    y: FloatArray['*batch']
+    x: int = dataclasses.field(default=1, init=False)
+
+    @dca.vectorize_method
+    def fn(self):
+      assert not self.shape
+      assert self.x == 5
+      return self
+
+  a = DataclassWithNonInit(y=[1, 0, 0]).as_xnp(xnp)
+  assert a.shape == (3,)
+  assert a.x == 1
+
+  # Replace supported
+  a = a.replace(x=5)
+  assert a.shape == (3,)
+  assert a.x == 5
+
+  a = a.replace(y=a.y + 1)
+  assert a.shape == (3,)
+  assert a.x == 5
+
+  # Vectorization supported
+  if xnp != tnp:
+    a = a.fn()
+  assert a.xnp is xnp
+  assert a.shape == (3,)
+  assert a.x == 5
+
+  # Tree-map supported
+  a = jax.tree_util.tree_map(lambda x: x, a)
+  assert a.shape == (3,)
+  assert a.x == 5

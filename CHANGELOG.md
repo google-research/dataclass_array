@@ -25,6 +25,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 *   Added: Syntax to specify the shape of the DataclassArray (e.g. `MyRay['h
     w']`).
+*   Fixed: Correctly forward non-init fields in `.replace`, `tree_map`,
+    `@dca.vectorize_method`
 
 ## [1.0.0] - 2022-08-08
 
