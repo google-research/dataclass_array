@@ -34,24 +34,28 @@ set_tnp = enp.testing.set_tnp
 # TODO(epot): Test dtype `complex`, `str`
 
 
+@dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
 class Point(dca.DataclassArray):
   x: f32['*shape']
   y: f32['*shape']
 
 
+@dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
 class PointWrapper(dca.DataclassArray):
   pts: Point
   rgb: f32['*shape 3']
 
 
+@dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
 class Isometrie(dca.DataclassArray):
   r: f32['... 3 3']
   t: i32[..., 2]
 
 
+@dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
 class Nested(dca.DataclassArray):
   # pytype: disable=annotation-type-mismatch
@@ -61,6 +65,7 @@ class Nested(dca.DataclassArray):
   # pytype: enable=annotation-type-mismatch
 
 
+@dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
 class WithStatic(dca.DataclassArray):
   """Mix of static and array fields."""
@@ -541,8 +546,6 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 
   @dataclasses.dataclass(frozen=True)
   class PointNoCast(dca.DataclassArray):
-    __dca_params__ = dca.DataclassParams(cast_dtype=False)
-
     x: FloatArray['*shape']
     y: IntArray['*shape']
 
@@ -564,10 +567,9 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_list(xnp: enp.NpModule):
 
+  @dca.dataclass_array(cast_list=False)
   @dataclasses.dataclass(frozen=True)
   class PointNoList(dca.DataclassArray):
-    __dca_params__ = dca.DataclassParams(cast_list=False)
-
     x: FloatArray['*shape']
     y: IntArray['*shape']
 
@@ -583,15 +585,13 @@ def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
 
   @dataclasses.dataclass(frozen=True)
   class PointNoBroadcast(dca.DataclassArray):
-    __dca_params__ = dca.DataclassParams(broadcast=False)
-
     x: FloatArray['*shape']
     y: IntArray['*shape']
 
   with pytest.raises(ValueError, match='Cannot broadcast'):
     PointNoBroadcast(
         x=xnp.array(1, dtype=np.float16),
-        y=xnp.array([1, 2, 3], dtype=np.float16),
+        y=xnp.array([1, 2, 3], dtype=np.int32),
     )
 
 

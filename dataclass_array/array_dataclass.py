@@ -54,16 +54,62 @@ _METADATA_KEY = 'dca_field'
 class DataclassParams:
   """Params controlling the DataclassArray behavior.
 
-  Saved in `cls.__dca_params__`.
+  Set by `@dca.dataclass_array`. Saved in `cls.__dca_params__`.
 
   Attributes:
-    broadcast: If `False`, disable input broadcasting
-    cast_dtype: If `False`, do not auto-cast inputs `dtype`
-    cast_list: If `False`, do not auto-cast lists to `xnp.ndarray`
+    broadcast: If `True`, enable input broadcasting
+    cast_dtype: If `True`, auto-cast inputs `dtype`
+    cast_list: If `True`, auto-cast lists to `xnp.ndarray`
   """
-  broadcast: bool = True
-  cast_dtype: bool = True
+  # If modifying this, make sure to modify `@dataclass_array` too!
+  broadcast: bool = False
+  cast_dtype: bool = False
   cast_list: bool = True
+
+
+def dataclass_array(
+    *,
+    # If modifying this, make sure to modify `DataclassParams` too!
+    broadcast: bool = False,
+    cast_dtype: bool = False,
+    cast_list: bool = True,
+) -> Callable[[type[_DcT]], type[_DcT]]:
+  """Optional decorator to customize `dca.DataclassArray` params.
+
+  Usage:
+
+  ```python
+  @dca.dataclass_array()
+  @dataclasses.dataclass(frozen=True)
+  class MyDataclass(dca.DataclassArray):
+    ...
+  ```
+
+  This decorator has to be added in addition of inheriting from
+  `dca.DataclassArray`.
+
+  Args:
+    broadcast: If `True`, enable input broadcasting
+    cast_dtype: If `True`, auto-cast inputs `dtype`
+    cast_list: If `True`, auto-cast lists to `xnp.ndarray`
+
+  Returns:
+    decorator: The decorator which will apply the options to the dataclass
+  """
+
+  def decorator(cls):
+    if not issubclass(cls, DataclassArray):
+      raise TypeError(
+          '`@dca.dataclass_array` can only be applied on `dca.DataclassArray`. '
+          f'Got: {cls}')
+    cls.__dca_params__ = DataclassParams(
+        broadcast=broadcast,
+        cast_dtype=cast_dtype,
+        cast_list=cast_list,
+    )
+    return cls
+
+  return decorator
 
 
 class MetaDataclassArray(type):
@@ -545,8 +591,9 @@ class DataclassArray(metaclass=MetaDataclassArray):
         return
       elif not self.__dca_params__.broadcast:  # Broadcasing disabled
         raise ValueError(
-            f'{type(self).__qualname__} has `broadcast=False`. Cannot '
-            f'broadcast {f.name} from {f.full_shape} to {final_shape}')
+            f'{type(self).__qualname__} has `broadcast=False`. '
+            f'Cannot broadcast {f.name} from {f.full_shape} to {final_shape}. '
+            f'To enable broadcast, use `@dca.dataclass_array(broadcast=True)`.')
       self._setattr(f.name, f.broadcast_to(final_shape))
 
     self._map_field(

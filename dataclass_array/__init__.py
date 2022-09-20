@@ -32,8 +32,8 @@ if pytest:
 from dataclass_array import typing
 # TODO(epot): Rename array_field -> field internally
 from dataclass_array.array_dataclass import array_field as field
+from dataclass_array.array_dataclass import dataclass_array
 from dataclass_array.array_dataclass import DataclassArray
-from dataclass_array.array_dataclass import DataclassParams
 from dataclass_array.ops import stack
 from dataclass_array.vectorization import vectorize_method
 

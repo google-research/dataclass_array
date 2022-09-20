@@ -23,6 +23,10 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Changed: By default, dataclass_array do not cast and broadcast inputs
+    anymore.
+*   Added: `@dca.dataclass_array` to customize the `dca.DataclassArray` params
+
 ## [1.1.0] - 2022-08-15
 
 *   Added: Array types can be imported directly from `dataclass_array.typing`
