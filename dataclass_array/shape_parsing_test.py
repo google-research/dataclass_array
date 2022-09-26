@@ -67,6 +67,7 @@ def test_parse_shape_types():
         ('... 3 5', (3, 5)),
         ('... 3 5 7', (3, 5, 7)),
         ('... 3 _ _ 7', (3, None, None, 7)),
+        ('... 3 h w 7', (3, None, None, 7)),
         ('*shape', ()),
         ('*shape _', (None,)),
         ('*shape 3', (3,)),
@@ -92,11 +93,7 @@ def test_get_inner_shape_failure_first_dim(shape_str: str):
 
 @pytest.mark.parametrize(
     'shape_str',
-    [
-        '... ...',
-        '... 3 d 1',
-        '*shape 3 d 1',
-    ],
+    ['... ...'],
 )
 def test_get_inner_shape_failure_dynamic(shape_str: str):
   with pytest.raises(ValueError, match='Only static or None dimension'):

@@ -25,6 +25,9 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 *   Changed: By default, dataclass_array do not cast and broadcast inputs
     anymore.
+*   Changed: `dca.DataclassArray` fields can be annotated with named axis (e.g.
+    `FloatArray['*shape h w 3']`). Note that consistency across fields is not
+    checked yet.
 *   Added: `@dca.dataclass_array` to customize the `dca.DataclassArray` params
 
 ## [1.1.0] - 2022-08-15

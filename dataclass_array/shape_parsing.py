@@ -88,13 +88,16 @@ def get_inner_shape(shape_str: str) -> _Shape:
   shape = parser.parse(shape_str)
 
   # TODO(epot): Reraise typing with `shape` debug message
-  # TODO(epot): Support `_` & `None` dim
   if not shape or not isinstance(shape[0], _VarDim):
     raise ValueError(
         f'Shape {shape_str!r} should start by `...` or `*shape` (e.g. '
         '`f32[\'*shape 3\']`)')
 
   inner_shape = shape[1:]
+  # Currently, `_NamedDim` are accepted but consistency isn't checked across
+  # fields
+  inner_shape = tuple(
+      None if isinstance(s, _NamedDim) else s for s in inner_shape)
   if not all(isinstance(dim, (int, type(None))) for dim in inner_shape):
     raise ValueError('Only static or None dimensions supported.')
 
