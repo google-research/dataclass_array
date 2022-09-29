@@ -48,7 +48,8 @@ def get_xnp(x: Any, *, strict: bool = True) -> enp.NpModule:
     xnp = enp.lazy.get_xnp(x, strict=strict)
   else:
     raise TypeError(
-        f'Unexpected array type: {type(x)}. Could not infer numpy module.')
+        f'Unexpected array type: {type(x)}. Could not infer numpy module.'
+    )
   return xnp
 
 
@@ -116,8 +117,9 @@ def asarray(
   # Handle DataclassArray
   if isinstance(x, array_dataclass.DataclassArray):
     # If dtype is given, validate this match
-    if dtype is not None and (not isinstance(dtype, type) or
-                              not isinstance(x, dtype)):
+    if dtype is not None and (
+        not isinstance(dtype, type) or not isinstance(x, dtype)
+    ):
       raise TypeError(f'Expected {dtype}. Got: {type(x)}')
     return x.as_xnp(xnp)
 

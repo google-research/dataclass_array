@@ -61,14 +61,14 @@ DynamicShape = Tuple[Optional[int], ...]
 # .mean(axis=...)
 Axes = Union[None, Shape, int]
 
-# pyformat: disable
-DTypeArg = Type[Union[
-    int,
-    float,
-    # TODO(epot): Add `np.typing.DTypeLike` once numpy version is updated
-    'array_dataclass.DataclassArray',
-]]
-# pyformat: enable
+DTypeArg = Type[
+    Union[
+        int,
+        float,
+        # TODO(epot): Add `np.typing.DTypeLike` once numpy version is updated
+        'array_dataclass.DataclassArray',
+    ]
+]
 
 DcT = TypeVar('DcT', bound='array_dataclass.DataclassArray')
 

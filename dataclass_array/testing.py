@@ -30,6 +30,7 @@ import numpy as np
 @dataclasses.dataclass(frozen=True)
 class Ray(array_dataclass.DataclassArray):
   """Dummy dataclass array for testing."""
+
   pos: FloatArray[..., 3]
   dir: FloatArray[..., 3]
 

@@ -32,13 +32,16 @@ def test_tree_map():
   def map_fn(x):
     return x * 10
 
-  result = tree_utils.tree_map(map_fn, {
-      'a': 1,
-      'b': {
-          'c': 2,
-          'e': [3, 4, 5],
+  result = tree_utils.tree_map(
+      map_fn,
+      {
+          'a': 1,
+          'b': {
+              'c': 2,
+              'e': [3, 4, 5],
+          },
       },
-  })
+  )
   assert result == {
       'a': 10,
       'b': {

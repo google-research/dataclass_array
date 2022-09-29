@@ -30,7 +30,6 @@ import tensorflow as tf
 # Activate the fixture
 set_tnp = enp.testing.set_tnp
 
-
 # TODO(epot): Test dtype `complex`, `str`
 
 
@@ -69,6 +68,7 @@ class Nested(dca.DataclassArray):
 @dataclasses.dataclass(frozen=True)
 class WithStatic(dca.DataclassArray):
   """Mix of static and array fields."""
+
   static: str
   x: f32['... 3']
   y: Any = dca.field(shape=(2, 2), dtype=np.float32)
@@ -203,11 +203,14 @@ parametrize_dataclass_arrays = pytest.mark.parametrize(
 
 
 @enp.testing.parametrize_xnp(with_none=True)
-@pytest.mark.parametrize('x, y, shape', [
-    (1, 2, ()),
-    ([1, 2], [3, 4], (2,)),
-    ([[1], [2]], [[3], [4]], (2, 1)),
-])
+@pytest.mark.parametrize(
+    'x, y, shape',
+    [
+        (1, 2, ()),
+        ([1, 2], [3, 4], (2,)),
+        ([[1], [2]], [[3], [4]], (2, 1)),
+    ],
+)
 def test_point_infered_np(
     xnp: enp.NpModule,
     x,
@@ -336,8 +339,7 @@ def test_wrong_input_type():
   pts = Point(x=1, y=1)
 
   # str instead of ndarray
-  with pytest.raises(
-      TypeError, match='Could not infer numpy module'):
+  with pytest.raises(TypeError, match='Could not infer numpy module'):
     _ = Point(
         x=1,
         y='a',
@@ -353,7 +355,7 @@ def test_wrong_input_type():
   # ndarray instead of DataclassArray
   with pytest.raises(TypeError, match='Invalid PointWrapper.pts:'):
     _ = PointWrapper(
-        pts=enp.lazy.np.array(.1),
+        pts=enp.lazy.np.array(0.1),
         rgb=pts,
     )
 
@@ -362,7 +364,6 @@ def test_wrong_input_type():
 
 
 def test_isometrie_wrong_input():
-
   # Incompatible types
   with pytest.raises(ValueError, match='Conflicting numpy types'):
     _ = Isometrie(
@@ -393,27 +394,30 @@ def test_isometrie_wrong_input():
     p.reshape((2, 2))
 
 
-@pytest.mark.parametrize('batch_shape, indices', [
-    ((), np.index_exp[...]),
-    ((2,), np.index_exp[...]),
-    ((3, 2), np.index_exp[...]),
-    ((3, 2), np.index_exp[0]),
-    ((3, 2), np.index_exp[0, ...]),
-    ((3, 2), np.index_exp[..., 0]),
-    ((3, 2), np.index_exp[0, 0]),
-    ((3, 2), np.index_exp[..., 0, 0]),
-    ((3, 2), np.index_exp[0, ..., 0]),
-    ((3, 2), np.index_exp[0, 0, ...]),
-    ((3, 2), np.index_exp[0, :, ...]),
-    ((3, 2), np.index_exp[:, ..., :]),
-    ((3, 2), np.index_exp[None,]),
-    ((3, 2), np.index_exp[None, :]),
-    ((3, 2), np.index_exp[np.newaxis, :]),
-    ((2,), np.index_exp[None, ..., None, 0, None, None]),
-    ((2,), np.index_exp[None, ..., None, 0, None, None]),
-    ((3, 2), np.index_exp[None, ..., None, 0, None, None]),
-    ((3, 1, 2), np.index_exp[None, ..., None, 0, None, None]),
-])
+@pytest.mark.parametrize(
+    'batch_shape, indices',
+    [
+        ((), np.index_exp[...]),
+        ((2,), np.index_exp[...]),
+        ((3, 2), np.index_exp[...]),
+        ((3, 2), np.index_exp[0]),
+        ((3, 2), np.index_exp[0, ...]),
+        ((3, 2), np.index_exp[..., 0]),
+        ((3, 2), np.index_exp[0, 0]),
+        ((3, 2), np.index_exp[..., 0, 0]),
+        ((3, 2), np.index_exp[0, ..., 0]),
+        ((3, 2), np.index_exp[0, 0, ...]),
+        ((3, 2), np.index_exp[0, :, ...]),
+        ((3, 2), np.index_exp[:, ..., :]),
+        ((3, 2), np.index_exp[None,]),
+        ((3, 2), np.index_exp[None, :]),
+        ((3, 2), np.index_exp[np.newaxis, :]),
+        ((2,), np.index_exp[None, ..., None, 0, None, None]),
+        ((2,), np.index_exp[None, ..., None, 0, None, None]),
+        ((3, 2), np.index_exp[None, ..., None, 0, None, None]),
+        ((3, 1, 2), np.index_exp[None, ..., None, 0, None, None]),
+    ],
+)
 def test_normalize_indices(batch_shape: Shape, indices):
   # Compare the indexing with and without the extra batch shcape
   x0 = np.ones(batch_shape + (4, 2))
@@ -543,7 +547,6 @@ def test_jax_vmap():
 
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_cast(xnp: enp.NpModule):
-
   @dataclasses.dataclass(frozen=True)
   class PointNoCast(dca.DataclassArray):
     x: FloatArray['*shape']
@@ -566,7 +569,6 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_list(xnp: enp.NpModule):
-
   @dca.dataclass_array(cast_list=False)
   @dataclasses.dataclass(frozen=True)
   class PointNoList(dca.DataclassArray):
@@ -582,7 +584,6 @@ def test_dataclass_params_no_list(xnp: enp.NpModule):
 
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
-
   @dataclasses.dataclass(frozen=True)
   class PointNoBroadcast(dca.DataclassArray):
     x: FloatArray['*shape']
@@ -598,7 +599,6 @@ def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 @pytest.mark.parametrize('batch_shape', [(), (1, 3)])
 def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
-
   @dataclasses.dataclass(frozen=True)
   class PointDynamicShape(dca.DataclassArray):
     x: FloatArray[..., None, None]

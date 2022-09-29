@@ -28,6 +28,7 @@ import typing_extensions
 @dataclasses.dataclass(eq=True, frozen=True)
 class ShapeAnnotation:
   """Annotations for `Ray[''] == Annotated[Ray, ShapeAnnotation('')]`."""
+
   shape: str
 
   def __post_init__(self):
@@ -39,6 +40,7 @@ class ShapeAnnotation:
 @dataclasses.dataclass(eq=True, frozen=True)
 class DataclassWithShape:
   """Structure which represent `Ray['h w']`."""
+
   cls: type[array_dataclass.DataclassArray]
   shape: str
 

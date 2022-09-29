@@ -119,7 +119,8 @@ def get_array_type(hint: TypeAlias) -> Optional[Any]:
   if array_types and dc_types:
     raise NotImplementedError(
         f'{hint} mix dataclass and array. Please open an issue if you need '
-        'this feature.')
+        'this feature.'
+    )
   if dc_types:
     if len(dc_types) > 1:
       # Validate the inner shape
@@ -127,7 +128,8 @@ def get_array_type(hint: TypeAlias) -> Optional[Any]:
       if len(common_shapes) != 1:
         raise NotImplementedError(
             f'{hint} mix dataclass with different inner shape. Please open an '
-            'issue if you need this feature.')
+            'issue if you need this feature.'
+        )
       (common_shape,) = common_shapes
       return field_utils.DataclassWithShape(
           cls=array_dataclass.DataclassArray,
@@ -139,6 +141,7 @@ def get_array_type(hint: TypeAlias) -> Optional[Any]:
     if len(array_types) > 1:
       raise NotImplementedError(
           f'{hint} mix multiple array types. Please open an issue if you need '
-          'this feature.')
+          'this feature.'
+      )
     else:
       return array_types[0]

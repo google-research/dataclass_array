@@ -52,6 +52,7 @@ class Signature(Generic[_OutT]):
   ```
 
   """
+
   fn: _Fn[_OutT]
   signature: inspect.Signature = dataclasses.field(init=False)
 
@@ -84,6 +85,7 @@ class Signature(Generic[_OutT]):
 @dataclasses.dataclass
 class BoundArgs(Generic[_ArgT, _OutT]):
   """Bounded arguments (wrapper around `inspect.BoundArguments`)."""
+
   bound_args: inspect.BoundArguments
   signature: Signature
 
@@ -98,8 +100,8 @@ class BoundArgs(Generic[_ArgT, _OutT]):
     """Return the `self` bounded arg of the bound call."""
     if not self.has_self:
       raise ValueError(
-          f'{self.fn_name} does not have `self` arg: '
-          f'{self.signature.signature}')
+          f'{self.fn_name} does not have `self` arg: {self.signature.signature}'
+      )
     return self[0]
 
   @property
@@ -138,7 +140,8 @@ class BoundArgs(Generic[_ArgT, _OutT]):
             value=value,
             pos=i,
             bound_args=self,
-        ) for i, (name, value) in enumerate(arg_items)
+        )
+        for i, (name, value) in enumerate(arg_items)
     ]
 
   @epy.cached_property  # pytype: disable=invalid-annotation
@@ -154,7 +157,8 @@ class BoundArgs(Generic[_ArgT, _OutT]):
     else:
       raise TypeError(
           f'{self.__class__.__qualname__} indices should be str, int or '
-          f'slice. Not {type(key)} ({key!r})')
+          f'slice. Not {type(key)} ({key!r})'
+      )
 
   def __len__(self) -> int:
     return len(self._arguments_list)
@@ -220,6 +224,7 @@ class BoundArgs(Generic[_ArgT, _OutT]):
 @dataclasses.dataclass
 class BoundArg(Generic[_ArgT]):
   """Bounded argument."""
+
   name: str
   value: _ArgT
   pos: int
@@ -240,13 +245,12 @@ class BoundArg(Generic[_ArgT]):
   @property
   def is_self(self) -> bool:
     """Return `True` if the argument is `self`."""
-    # pyformat: disable
     return (
         self.pos == 0
         and self.name == 'self'
-        and self.parameter.kind in (
+        and self.parameter.kind
+        in (
             inspect.Parameter.POSITIONAL_ONLY,
             inspect.Parameter.POSITIONAL_OR_KEYWORD,
         )
     )
-    # pyformat: enable

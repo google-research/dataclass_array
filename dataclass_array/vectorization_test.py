@@ -67,7 +67,6 @@ def test_broadcast_args(
     expected_arg_shape: dca.typing.Shape,
     xnp: enp.NpModule,
 ):
-
   def fn(self, arg_dc, arg_array):
     assert isinstance(self, dca.testing.Ray)
     assert isinstance(arg_dc, dca.testing.Ray)
@@ -117,8 +116,8 @@ def test_broadcast_args(
         ((H, W), ()),
         ((H, W), (H,)),
         ((H, W), (W,)),
-        ((H, W), (H, X0,)),
-        ((H, W), (X0, W,)),
+        ((H, W), (H, X0)),
+        ((H, W), (X0, W)),
     ],
 )
 @enp.testing.parametrize_xnp()
@@ -127,7 +126,6 @@ def test_broadcast_args_failure(
     arg_shape: dca.typing.Shape,
     xnp: enp.NpModule,
 ):
-
   def fn(self, arg):
     del self, arg
 
@@ -150,12 +148,12 @@ def test_broadcast_args_failure(
 
 @enp.testing.parametrize_xnp()
 def test_replace_dca(xnp: enp.NpModule):
-
   # Ensure that the non-init static fields are correctly forwarded.
 
   @dataclasses.dataclass(frozen=True)
   class DataclassWithNonInit(dca.DataclassArray):
     """Dataclass with a non-init (static) field."""
+
     __dca_non_init_fields__ = ('x',)
 
     y: FloatArray['*batch']

@@ -61,6 +61,7 @@ class DataclassParams:
     cast_dtype: If `True`, auto-cast inputs `dtype`
     cast_list: If `True`, auto-cast lists to `xnp.ndarray`
   """
+
   # If modifying this, make sure to modify `@dataclass_array` too!
   broadcast: bool = False
   cast_dtype: bool = False
@@ -101,7 +102,8 @@ def dataclass_array(
     if not issubclass(cls, DataclassArray):
       raise TypeError(
           '`@dca.dataclass_array` can only be applied on `dca.DataclassArray`. '
-          f'Got: {cls}')
+          f'Got: {cls}'
+      )
     cls.__dca_params__ = DataclassParams(
         broadcast=broadcast,
         cast_dtype=cast_dtype,
@@ -174,6 +176,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
   field annotated with `field: np.ndarray` or similar).
 
   """
+
   # Child class inherit the default params by default, but can also
   # overwrite them.
   __dca_params__: ClassVar[DataclassParams] = DataclassParams()
@@ -208,7 +211,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # Make sure the dataclass was registered and frozen
     if not dataclasses.is_dataclass(cls) or not cls.__dataclass_params__.frozen:  # pytype: disable=attribute-error
       raise ValueError(
-          '`dca.DataclassArray` need to be @dataclasses.dataclass(frozen=True)')
+          '`dca.DataclassArray` need to be @dataclasses.dataclass(frozen=True)'
+      )
 
     # Register the tree_map here instead of `__init_subclass__` as `jax` may
     # not have been registered yet during import
@@ -219,7 +223,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
     if not self._all_array_fields:
       raise ValueError(
           f'{self.__class__.__qualname__} should have at least one '
-          '`dca.array_field`')
+          '`dca.array_field`'
+      )
 
     # Validate and normalize array fields
     # * Maybe cast (list, np) -> xnp
@@ -309,12 +314,10 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   def broadcast_to(self: _DcT, shape: Shape) -> _DcT:
     """Broadcast the batch shape."""
-    # pyformat: disable
     return self._map_field(
         array_fn=lambda f: f.broadcast_to(shape),
         dc_fn=lambda f: f.broadcast_to(shape),
     )
-    # pyformat: enable
 
   def __getitem__(self: _DcT, indices: _IndicesArg) -> _DcT:
     """Slice indexing."""
@@ -342,7 +345,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
     """Length of the first array dimension."""
     if not self.shape:
       raise TypeError(
-          f'len() of unsized {self.__class__.__name__} (shape={self.shape})')
+          f'len() of unsized {self.__class__.__name__} (shape={self.shape})'
+      )
     return self.shape[0]
 
   def __bool__(self) -> Literal[True]:
@@ -384,7 +388,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
     if self.shape and not len(self):  # pylint: disable=g-explicit-length-test
       raise ValueError(
           f'The truth value of {self.__class__.__name__} when `len(x) == 0` '
-          'is ambigous. Use `len(x)` or `x is not None`.')
+          'is ambigous. Use `len(x)` or `x is not None`.'
+      )
     return True
 
   def map_field(
@@ -475,8 +480,10 @@ class DataclassArray(metaclass=MetaDataclassArray):
       try:
         hints = typing_extensions.get_type_hints(cls, include_extras=True)
       except Exception as e:  # pylint: disable=broad-except
-        msg = (f'Could not infer typing annotation of {cls.__qualname__} '
-               f'defined in {cls.__module__}:\n')
+        msg = (
+            f'Could not infer typing annotation of {cls.__qualname__} '
+            f'defined in {cls.__module__}:\n'
+        )
         lines = [f' * {k}: {v!r}' for k, v in cls.__annotations__.items()]
         lines = '\n'.join(lines)
 
@@ -486,16 +493,19 @@ class DataclassArray(metaclass=MetaDataclassArray):
           f.name: _make_field_metadata(f, hints)
           for f in dataclasses.fields(self)
       }
-      cls._dca_fields_metadata = {  # Filter `None` values  # pylint: disable=protected-access
-          k: v for k, v in dca_fields_metadata.items() if v is not None
-      }
+      cls._dca_fields_metadata = (
+          {  # Filter `None` values  # pylint: disable=protected-access
+              k: v for k, v in dca_fields_metadata.items() if v is not None
+          }
+      )
 
     return {  # pylint: disable=g-complex-comprehension
         name: _ArrayField(
             name=name,
             host=self,
             **field_metadata.to_dict(),  # pylint: disable=not-a-mapping
-        ) for name, field_metadata in cls._dca_fields_metadata.items()  # pylint: disable=protected-access
+        )
+        for name, field_metadata in cls._dca_fields_metadata.items()  # pylint: disable=protected-access
     }
 
   @epy.cached_property
@@ -573,18 +583,17 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # Currently, we restrict broadcasting to either scalar or fixed length.
     # This is to avoid confusion broadcasting vs vectorization rules.
     # This restriction could be lifted if we encounter a use-case.
-    # pyformat: disable
     if (
         final_shape is None
         or len(shape_lengths) > 2
         or (len(shape_lengths) == 2 and 0 not in shape_lengths)
     ):
-      # pyformat: enable
       raise ValueError(
           f'Conflicting batch shapes: {shape_to_names}. '
           f'Currently {type(self).__qualname__}.__init__ broadcasting is '
           'restricted to scalar or dim=1 . '
-          'Please open an issue if you need more fine-grained broadcasting.')
+          'Please open an issue if you need more fine-grained broadcasting.'
+      )
 
     def _broadcast_field(f: _ArrayField) -> None:
       if f.host_shape == final_shape:  # Already broadcasted
@@ -593,7 +602,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
         raise ValueError(
             f'{type(self).__qualname__} has `broadcast=False`. '
             f'Cannot broadcast {f.name} from {f.full_shape} to {final_shape}. '
-            f'To enable broadcast, use `@dca.dataclass_array(broadcast=True)`.')
+            'To enable broadcast, use `@dca.dataclass_array(broadcast=True)`.'
+        )
       self._setattr(f.name, f.broadcast_to(final_shape))
 
     self._map_field(
@@ -670,7 +680,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
         zip(
             metadata.array_field_names,
             array_field_values,
-        ))
+        )
+    )
     init_fields = {}
     non_init_fields = {}
     fields = {f.name: f for f in dataclasses.fields(cls)}
@@ -687,7 +698,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
         raise ValueError(
             '`dca.DataclassArray` field with init=False should be explicitly '
             'specified in `__dca_non_init_fields__` for them to be '
-            'propagated by `tree_map`.')
+            'propagated by `tree_map`.'
+        )
       # TODO(py310): Delete once dataclass supports `kw_only=True`
       for k, v in non_init_fields.items():
         self._setattr(k, v)  # pylint: disable=protected-access
@@ -703,7 +715,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
     if xnp is not self.xnp:
       raise ValueError(
           f'{self.__class__.__name__} is {self.xnp.__name__} but got input '
-          f'{xnp.__name__}. Please cast input first.')
+          f'{xnp.__name__}. Please cast input first.'
+      )
 
 
 def _infer_xnp(xnps: dict[enp.NpModule, list[str]]) -> enp.NpModule:
@@ -741,13 +754,15 @@ def _to_absolute_indices(indices: _Indices, *, shape: Shape) -> _Indices:
     raise IndexError("an index can only have a single ellipsis ('...')")
   valid_count = _count_not_none(indices)
   if valid_count > len(shape):
-    raise IndexError(f'too many indices for array. Batch shape is {shape}, but '
-                     f'rank-{valid_count} was provided.')
+    raise IndexError(
+        f'too many indices for array. Batch shape is {shape}, but '
+        f'rank-{valid_count} was provided.'
+    )
   if not ellipsis_count:
     return indices
   ellipsis_index = indices.index(Ellipsis)
   start_elems = indices[:ellipsis_index]
-  end_elems = indices[ellipsis_index + 1:]
+  end_elems = indices[ellipsis_index + 1 :]
   ellipsis_replacement = [slice(None)] * (len(shape) - valid_count)
   return (*start_elems, *ellipsis_replacement, *end_elems)
 
@@ -755,6 +770,7 @@ def _to_absolute_indices(indices: _Indices, *, shape: Shape) -> _Indices:
 @dataclasses.dataclass(frozen=True)
 class _TreeMetadata:
   """Metadata forwarded in ``."""
+
   array_field_names: list[str]
   non_array_field_kwargs: dict[str, Any]
 
@@ -800,6 +816,7 @@ class _ArrayFieldMetadata:
     dtype: Type of the array. Can be `array_types.dtypes.DType` or
       `dca.DataclassArray` for nested arrays.
   """
+
   inner_shape_non_static: DynamicShape
   dtype: Union[array_types.dtypes.DType, type[DataclassArray]]
 
@@ -832,6 +849,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     name: Instance of the attribute
     host: Dataclass instance who this field is attached too
   """
+
   name: str
   host: DataclassArray = dataclasses.field(repr=False)
 
@@ -862,12 +880,13 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     """Returns the the static shape resolved for the current value."""
     if not self.inner_shape_non_static:
       return ()
-    static_shape = self.full_shape[-len(self.inner_shape_non_static):]
+    static_shape = self.full_shape[-len(self.inner_shape_non_static) :]
 
     def err_msg() -> ValueError:
       return ValueError(
           f'Shape do not match. Expected: {self.inner_shape_non_static}. '
-          f'Got {static_shape}')
+          f'Got {static_shape}'
+      )
 
     if len(static_shape) != len(self.inner_shape_non_static):
       raise err_msg()
@@ -889,9 +908,9 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
       # In `jax/_src/api_util.py` for `flatten_axes`, jax set all values to a
       # dummy sentinel `object()` value.
       return True
-    elif (isinstance(self.value, DataclassArray) and
-          not self.value._array_fields  # pylint: disable=protected-access
-         ):
+    elif (
+        isinstance(self.value, DataclassArray) and not self.value._array_fields  # pylint: disable=protected-access
+    ):
       # Nested dataclass case (if all attributes are `None`, so no active
       # array fields)
       return True
@@ -903,14 +922,15 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     if not self.inner_shape_non_static:
       shape = self.full_shape
     else:
-      shape = self.full_shape[:-len(self.inner_shape_non_static)]
+      shape = self.full_shape[: -len(self.inner_shape_non_static)]
     return shape
 
   def assert_shape(self) -> None:
     if self.host_shape + self.inner_shape != self.full_shape:
       raise ValueError(
-          f'Shape should be '
-          f'{(py_utils.Ellipsis, *self.inner_shape)}. Got: {self.full_shape}')
+          'Shape should be '
+          f'{(py_utils.Ellipsis, *self.inner_shape)}. Got: {self.full_shape}'
+      )
 
   def broadcast_to(self, shape: Shape) -> DcOrArrayT:
     """Broadcast the host_shape."""
