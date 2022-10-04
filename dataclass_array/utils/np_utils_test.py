@@ -26,10 +26,10 @@ import pytest
 @enp.testing.parametrize_xnp()
 def test_get_xnp(xnp: enp.NpModule):
   # Dataclass array support
-  r = dca.testing.Ray(pos=xnp.array([3., 0, 0]), dir=xnp.array([3., 0, 0]))
+  r = dca.testing.Ray(pos=xnp.array([3.0, 0, 0]), dir=xnp.array([3.0, 0, 0]))
   assert np_utils.get_xnp(r) is xnp
   # Array support
-  assert np_utils.get_xnp(xnp.array([3., 0, 0])) is xnp
+  assert np_utils.get_xnp(xnp.array([3.0, 0, 0])) is xnp
 
   with pytest.raises(TypeError, match='Unexpected array type'):
     np_utils.get_xnp('abc')
@@ -61,11 +61,17 @@ def test_to_absolute_axis():
 
 
 def test_to_absolute_einops():
-  assert np_utils.to_absolute_einops(
-      'b (h w) -> b h w',
-      nlastdim=2,
-  ) == 'b (h w)  arr__0 arr__1 -> b h w arr__0 arr__1'
-  assert np_utils.to_absolute_einops(
-      'b (h w) arr__0 -> b h w arr__0',
-      nlastdim=2,
-  ) == 'b (h w) arr__0  arr__1 arr__2 -> b h w arr__0 arr__1 arr__2'
+  assert (
+      np_utils.to_absolute_einops(
+          'b (h w) -> b h w',
+          nlastdim=2,
+      )
+      == 'b (h w)  arr__0 arr__1 -> b h w arr__0 arr__1'
+  )
+  assert (
+      np_utils.to_absolute_einops(
+          'b (h w) arr__0 -> b h w arr__0',
+          nlastdim=2,
+      )
+      == 'b (h w) arr__0  arr__1 arr__2 -> b h w arr__0 arr__1 arr__2'
+  )

@@ -37,17 +37,13 @@ _FnT = TypeVar('_FnT', bound=Callable)
 _OutT = TypeVar('_OutT')
 _Out = Any
 
-
 # Metadata specifying which argument should be concidered static:
 # @dca.vectorize_method(static_args={'arg0'})
 _StaticArgInfo = Optional[Set[str]]
-# pyformat: disable
 _MapNonStatic = Callable[
     [Callable, inspect_utils.BoundArgs],  # TODO(epot): Complete types
     inspect_utils.BoundArgs,
 ]
-# pyformat: enable
-
 
 # TODO(epot): Is it possible to support `classmethod` too ? Auto-detecting
 # batch shape might require assumptions, or additional argument to explitly
@@ -138,12 +134,14 @@ def vectorize_method(
   if sig.has_var:
     raise NotImplementedError(
         '`@dca.vectorize_method` does not support function with variable args '
-        f'(`*args` or `**kwargs`). For {sig.fn_name}. Please open an issue.')
+        f'(`*args` or `**kwargs`). For {sig.fn_name}. Please open an issue.'
+    )
 
   if static_args is not None:
     if not isinstance(static_args, set):
       raise TypeError(
-          f'Unexpected `static_args={static_args!r}`. Expected `set`.')
+          f'Unexpected `static_args={static_args!r}`. Expected `set`.'
+      )
   map_non_static = functools.partial(
       _map_non_static,
       static_args=static_args,
@@ -159,7 +157,8 @@ def vectorize_method(
     if not isinstance(self, array_dataclass.DataclassArray):
       raise TypeError(
           'dca.vectorize_method should be applied on DataclassArray method. '
-          f'Not: {type(self)}')
+          f'Not: {type(self)}'
+      )
 
     if not self.shape:  # No batch shape, no-need to vectorize
       return fn(self, *args, **kwargs)
@@ -237,8 +236,9 @@ def _broadcast_and_flatten_args(
 def _assert_is_array(array: DcOrArray, *, xnp: enp.NpModule) -> None:
   """Validate the value is an array."""
   if not np_utils.is_array(array):
-    raise TypeError(f'Expected `dca.DataclassArray` or `xnp.ndarray`. '
-                    f'Got: {type(array)}')
+    raise TypeError(
+        f'Expected `dca.DataclassArray` or `xnp.ndarray`. Got: {type(array)}'
+    )
   array_xnp = np_utils.get_xnp(array)
   if array_xnp is not xnp:
     raise ValueError(f'Expected {xnp.__name__}, got {array_xnp.__name__}')
@@ -265,7 +265,8 @@ def _update_batch_shape(batch_shape: Shape, shape: Shape) -> Shape:
     raise ValueError(
         f'Cannot vectorize shape {shape} with {batch_shape}. '
         f'Shape should be {(*batch_shape, py_utils.Ellipsis)}, '
-        f'{(1,) * len(batch_shape) + (py_utils.Ellipsis,)} or similar.')
+        f'{(1,) * len(batch_shape) + (py_utils.Ellipsis,)} or similar.'
+    )
   new_batch_shape = []
   for arr_dim, target_dim in zip(shape, batch_shape):
     if arr_dim == target_dim:
@@ -273,8 +274,10 @@ def _update_batch_shape(batch_shape: Shape, shape: Shape) -> Shape:
     elif arr_dim == 1 or target_dim == 1:
       new_batch_shape.append(arr_dim * target_dim)
     else:
-      raise ValueError(f'Cannot vectorize shapes {shape} with {batch_shape}. '
-                       f'Incompatible dim {arr_dim} != {target_dim}')
+      raise ValueError(
+          f'Cannot vectorize shapes {shape} with {batch_shape}. '
+          f'Incompatible dim {arr_dim} != {target_dim}'
+      )
 
   # Update the batch shape
   return tuple(new_batch_shape)
@@ -287,7 +290,7 @@ def _broacast_and_flatten_to(
     xnp: enp.NpModule,
 ) -> DcOrArray:
   """Apply broadcast and flatten op to the array/dataclass array."""
-  inner_shape = array.shape[len(batch_shape):]
+  inner_shape = array.shape[len(batch_shape) :]
   final_shape = batch_shape + inner_shape
   if isinstance(array, array_dataclass.DataclassArray):
     array = array.broadcast_to(final_shape)
@@ -370,7 +373,8 @@ def _vmap_method_tf(
   # TODO(epot): Use `tf.vectorized_map()` once TF support custom nesting
   raise NotImplementedError(
       'vectorization not supported in TF yet due to lack of `tf.nest` '
-      'support. Please upvote or comment b/152678472.')
+      'support. Please upvote or comment b/152678472.'
+  )
 
 
 def _stack(*vals: _OutT) -> _OutT:
@@ -384,7 +388,8 @@ def _stack(*vals: _OutT) -> _OutT:
   else:
     raise TypeError(
         f'Unsupported output type {type(val)}. Only array or dataclass '
-        'array supported. Please open an issue if you need this feature.')
+        'array supported. Please open an issue if you need this feature.'
+    )
 
 
 def _unflatten(arrays: _OutT, *, batch_shape: Shape) -> _OutT:
@@ -392,16 +397,19 @@ def _unflatten(arrays: _OutT, *, batch_shape: Shape) -> _OutT:
   # TODO(epot): Also support non-array
   assert batch_shape
   batch_size = np_utils.size_of(batch_shape)
-  if (enp.lazy.is_array(arrays) or
-      isinstance(arrays, array_dataclass.DataclassArray)):
-    assert len(arrays.shape)  # `len`` because of b/198633198  # pylint: disable=g-explicit-length-test
+  if enp.lazy.is_array(arrays) or isinstance(
+      arrays, array_dataclass.DataclassArray
+  ):
+    # `len` because of b/198633198
+    assert len(arrays.shape)  # pylint: disable=g-explicit-length-test
     assert arrays.shape[0] == batch_size
     arrays = arrays.reshape(batch_shape + arrays.shape[1:])
     return arrays
   else:
     raise TypeError(
         f'Unsupported output type {type(arrays)}. Only array or dataclass '
-        'array supported. Please open an issue if you need this feature.')
+        'array supported. Please open an issue if you need this feature.'
+    )
 
 
 def _map_non_static(

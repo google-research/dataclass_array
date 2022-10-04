@@ -34,8 +34,10 @@ def stack(
   first_arr = arrays[0]
 
   if not isinstance(first_arr, array_dataclass.DataclassArray):
-    raise TypeError('`dca.stack` expect list of `dca.DataclassArray`. Got '
-                    f'{type(first_arr)}')
+    raise TypeError(
+        '`dca.stack` expect list of `dca.DataclassArray`. Got '
+        f'{type(first_arr)}'
+    )
 
   # This might have some edge cases if user try to stack subclasses
   types = epy.groupby(
@@ -45,7 +47,8 @@ def stack(
   )
   if False in types:
     raise TypeError(
-        f'v3.stack got conflicting types as input: {list(types.values())}')
+        f'v3.stack got conflicting types as input: {list(types.values())}'
+    )
 
   xnp = first_arr.xnp
   # If axis < 0, normalize the axis such as the last axis is before the inner
@@ -57,11 +60,10 @@ def stack(
   # But is consistent with `jax.tree_map`:
   # jax.tree_map(lambda x, y: x+y, (None, 10), (1, 2)) == (None, 12)
   # Similarly, static values will be the ones from the first element.
-  # pyformat: disable
   merged_arr = first_arr._map_field(  # pylint: disable=protected-access
-      array_fn=
-      lambda f: xnp.stack([getattr(arr, f.name) for arr in arrays], axis=axis),
+      array_fn=lambda f: xnp.stack(  # pylint: disable=g-long-lambda
+          [getattr(arr, f.name) for arr in arrays], axis=axis
+      ),
       dc_fn=lambda f: stack([getattr(arr, f.name) for arr in arrays]),
   )
-  # pyformat: enable
   return merged_arr

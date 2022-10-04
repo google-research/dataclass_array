@@ -20,7 +20,6 @@ from dataclass_array import shape_parsing
 from dataclass_array.typing import f32
 import pytest
 
-
 _VarDim = shape_parsing._VarDim
 _NamedDim = shape_parsing._NamedDim
 

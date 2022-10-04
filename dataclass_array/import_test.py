@@ -23,6 +23,7 @@ from __future__ import annotations
 import sys
 
 import dataclass_array as dca
+
 del dca
 
 

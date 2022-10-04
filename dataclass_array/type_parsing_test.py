@@ -24,7 +24,6 @@ from dataclass_array import type_parsing
 from dataclass_array.typing import f32, FloatArray  # pylint: disable=g-multiple-import
 import pytest
 
-
 _DS = dca.field_utils.DataclassWithShape
 Ray = dca.testing.Ray
 
