@@ -202,6 +202,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
     cls._dca_fields_metadata: Optional[dict[str, _ArrayFieldMetadata]] = None
 
     # Normalize the `cls.__dca_non_init_fields__`
+    # TODO(epot): Support inheritance if the parents also define
+    # `__dca_non_init_fields__` (fields should be merged from `.mro()`)
     cls.__dca_non_init_fields__ = set(cls.__dca_non_init_fields__)
 
   def __post_init__(self) -> None:
