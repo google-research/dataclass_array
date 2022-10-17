@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+## [1.2.0] - 2022-10-17
+
 *   Changed: By default, dataclass_array do not cast and broadcast inputs
     anymore.
 *   Changed: `dca.DataclassArray` fields can be annotated with named axis (e.g.
@@ -42,7 +44,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 *   Initial release
 
-[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.2.0...HEAD
+[1.1.0]: https://github.com/google-research/dataclass_array/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/google-research/dataclass_array/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/google-research/dataclass_array/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/google-research/dataclass_array/releases/tag/v0.1.0
