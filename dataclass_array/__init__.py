@@ -23,6 +23,25 @@ import sys
 
 # pylint: disable=g-import-not-at-top,g-bad-import-order
 
+from etils import edc
+
+old_fn = edc.cast_utils._apply_auto_cast
+
+
+def _apply_auto_cast(cls):
+  if cls.__dict__.get('_edc_auto_casted', True):
+    # Either:
+    # This class is not a `@edc.dataclass` (but parent might)
+    # This class is already processed
+    return
+
+  print('>>>>>', cls.__annotations__)
+  return old_fn(cls)
+
+
+edc.cast_utils._apply_auto_cast = _apply_auto_cast
+
+
 pytest = sys.modules.get('pytest')
 if pytest:
   # Inside tests, rewrite `assert` statement in `dca.testing` for better

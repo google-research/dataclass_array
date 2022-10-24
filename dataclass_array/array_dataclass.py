@@ -820,7 +820,7 @@ class _ArrayFieldMetadata:
   """
 
   inner_shape_non_static: DynamicShape
-  dtype: Union[array_types.dtypes.DType, type[DataclassArray]]
+  dtype: Union[array_types.dtypes.DType, Type[DataclassArray]]
 
   def __post_init__(self):
     """Normalizing/validating the shape/dtype."""
