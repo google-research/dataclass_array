@@ -23,6 +23,9 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Fixed: Compatibility with `edc.dataclass(auto_cast=True)` (fix the `'type'
+    object is not subscriptable` error)
+
 ## [1.2.0] - 2022-10-17
 
 *   Changed: By default, dataclass_array do not cast and broadcast inputs
