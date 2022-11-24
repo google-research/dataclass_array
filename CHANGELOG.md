@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+## [1.2.1] - 2022-11-24
+
 *   Fixed: Compatibility with `edc.dataclass(auto_cast=True)` (fix the `'type'
     object is not subscriptable` error)
 
@@ -47,8 +49,9 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 *   Initial release
 
-[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.2.0...HEAD
-[1.1.0]: https://github.com/google-research/dataclass_array/compare/v1.1.0...v1.2.0
+[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/google-research/dataclass_array/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/google-research/dataclass_array/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/google-research/dataclass_array/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/google-research/dataclass_array/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/google-research/dataclass_array/releases/tag/v0.1.0
