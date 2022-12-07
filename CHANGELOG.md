@@ -23,6 +23,9 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Added: Support for static `dca.DataclassArray` (dataclasses with only
+    static fields).
+
 ## [1.2.1] - 2022-11-24
 
 *   Fixed: Compatibility with `edc.dataclass(auto_cast=True)` (fix the `'type'

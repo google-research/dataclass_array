@@ -22,6 +22,8 @@ from typing import Any, Optional
 
 from dataclass_array import array_dataclass
 from dataclass_array.typing import FloatArray  # pylint: disable=g-multiple-import
+from etils import enp
+from etils import epy
 from etils.etree import jax as etree
 from etils.etree import Tree
 import numpy as np
@@ -79,3 +81,24 @@ def assert_array_equal(
   assert_allclose(x, y)
   if isinstance(x, array_dataclass.DataclassArray):
     assert x.xnp is y.xnp
+
+
+def assert_xnp(x: array_dataclass.DataclassArray, xnp: enp.NpModule) -> None:
+  """Recursively check that all values are `xnp`."""
+  assert isinstance(x, array_dataclass.DataclassArray)
+  assert x.xnp is xnp
+  # Do not use `etree` as it is meant to check that DataclassArray internals
+  # are working correctly
+  for k, v in x._all_array_fields.items():  # pylint: disable=protected-access
+    v = v.value
+    try:
+      if v is None:
+        continue
+      elif enp.lazy.is_array(v):  # xnp array
+        assert enp.lazy.get_xnp(v) is xnp
+      elif isinstance(v, array_dataclass.DataclassArray):
+        assert_xnp(v, xnp)
+      else:
+        raise TypeError(f'Unexpected value for {k}: {type(v)}')
+    except Exception as e:  # pylint: disable=broad-except
+      epy.reraise(e, prefix=f'{k}:')
