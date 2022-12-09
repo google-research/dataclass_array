@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import typing
 from typing import Any, Callable, ClassVar, Generic, Iterator, Optional, Set, Tuple, Type, TypeVar, Union
 
@@ -48,6 +49,7 @@ _Indices = Tuple[_IndiceItem]  # Normalized slicing
 _IndicesArg = Union[_IndiceItem, _Indices]
 
 _METADATA_KEY = 'dca_field'
+_DUMMY_ARRAY_FIELD = '_dca_dummy_array'
 
 
 @dataclasses.dataclass(frozen=True)
@@ -192,7 +194,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
   def __init_subclass__(cls, **kwargs):
     super().__init_subclass__(**kwargs)
     # TODO(epot): Could have smart __repr__ which display types if array have
-    # too many values.
+    # too many values (maybe directly in `edc.field(repr=...)`).
     edc.dataclass(kw_only=True, repr=True)(cls)
     cls._dca_tree_map_registered = False
     # Typing annotations have to be lazily evaluated (to support
@@ -210,23 +212,15 @@ class DataclassArray(metaclass=MetaDataclassArray):
     """Validate and normalize inputs."""
     cls = type(self)
 
-    # Make sure the dataclass was registered and frozen
-    if not dataclasses.is_dataclass(cls) or not cls.__dataclass_params__.frozen:  # pytype: disable=attribute-error
-      raise ValueError(
-          '`dca.DataclassArray` need to be @dataclasses.dataclass(frozen=True)'
-      )
+    # First time, we perform additional check & updates
+    if cls._dca_fields_metadata is None:  # pylint: disable=protected-access
+      _init_cls(self)
 
     # Register the tree_map here instead of `__init_subclass__` as `jax` may
     # not have been registered yet during import
     if enp.lazy.has_jax and not cls._dca_tree_map_registered:  # pylint: disable=protected-access
       enp.lazy.jax.tree_util.register_pytree_node_class(cls)
       cls._dca_tree_map_registered = True  # pylint: disable=protected-access
-
-    if not self._all_array_fields:
-      raise ValueError(
-          f'{self.__class__.__qualname__} should have at least one '
-          '`dca.array_field`'
-      )
 
     # Validate and normalize array fields
     # * Maybe cast (list, np) -> xnp
@@ -246,8 +240,9 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
     if xnp is None:  # No values
       # Inside `jax.tree_utils`, tree-def can be created with `None` values.
+      # Inside `jax.vmap`, tree can be created with `object()` sentinel values.
       assert shape is None
-      xnp = np
+      xnp = None
 
     # Cache results
     # Should the state be stored in a separate object to avoid collisions ?
@@ -418,6 +413,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # Create the new object
     new_self = dataclasses.replace(self, **init_kwargs)
 
+    # TODO(epot): Could try to unify logic bellow with `tree_unflatten`
+
     # Additionally forward the non-init kwargs
     # `dataclasses.field(init=False) kwargs are required because `init=True`
     # creates conflicts:
@@ -449,7 +446,13 @@ class DataclassArray(metaclass=MetaDataclassArray):
     """Returns the instance as containing `xnp.ndarray`."""
     if xnp is self.xnp:  # No-op
       return self
-    return self.map_field(xnp.asarray)
+
+    # Update all childs
+    new_self = self._map_field(
+        array_fn=lambda f: xnp.asarray(f.value),
+        dc_fn=lambda f: f.value.as_xnp(xnp),
+    )
+    return new_self
 
   # ====== Internal ======
 
@@ -474,45 +477,18 @@ class DataclassArray(metaclass=MetaDataclassArray):
   @epy.cached_property
   def _all_array_fields(self) -> dict[str, _ArrayField]:
     """All array fields, including `None` values."""
-    cls = type(self)
-
-    # The first time, compute typing annotations & metadata
-    if cls._dca_fields_metadata is None:  # pylint: disable=protected-access
-      # At this point, `ForwardRef` should have been resolved.
-      try:
-        hints = typing_extensions.get_type_hints(cls, include_extras=True)
-      except Exception as e:  # pylint: disable=broad-except
-        msg = (
-            f'Could not infer typing annotation of {cls.__qualname__} '
-            f'defined in {cls.__module__}:\n'
-        )
-        lines = [f' * {k}: {v!r}' for k, v in cls.__annotations__.items()]
-        lines = '\n'.join(lines)
-
-        epy.reraise(e, prefix=msg + lines + '\n')
-
-      dca_fields_metadata = {
-          f.name: _make_field_metadata(f, hints)
-          for f in dataclasses.fields(self)
-      }
-      cls._dca_fields_metadata = (  # pylint: disable=protected-access
-          {  # Filter `None` values
-              k: v for k, v in dca_fields_metadata.items() if v is not None
-          }
-      )
-
     return {  # pylint: disable=g-complex-comprehension
         name: _ArrayField(
             name=name,
             host=self,
             **field_metadata.to_dict(),  # pylint: disable=not-a-mapping
         )
-        for name, field_metadata in cls._dca_fields_metadata.items()  # pylint: disable=protected-access
+        for name, field_metadata in self._dca_fields_metadata.items()  # pylint: disable=protected-access
     }
 
   @epy.cached_property
   def _array_fields(self) -> list[_ArrayField]:
-    """All active array fields (non-None)."""
+    """All active array fields (non-None), including static ones."""
     # Filter `None` values
     return [
         f for f in self._all_array_fields.values() if not f.is_value_missing
@@ -520,7 +496,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   def _cast_xnp_dtype_inplace(self) -> Optional[enp.NpModule]:
     """Validate `xnp` are consistent and cast `np` -> `xnp` in-place."""
-    if not self._array_fields:  # No fields have been defined.
+    if not self._array_fields:  # All fields are `None` / `object`
       return None
 
     # Validate the dtype
@@ -566,6 +542,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
   def _broadcast_shape_inplace(self) -> Optional[Shape]:
     """Validate the shapes are consistent and broadcast values in-place."""
     if not self._array_fields:  # No fields have been defined.
+      # This can be the case internally by jax which apply some
+      # `tree_map(lambda x: sentinel)`.
       return None
 
     # First collect all shapes and compute the final shape.
@@ -719,6 +697,109 @@ class DataclassArray(metaclass=MetaDataclassArray):
           f'{self.__class__.__name__} is {self.xnp.__name__} but got input '
           f'{xnp.__name__}. Please cast input first.'
       )
+
+
+def _init_cls(self: DataclassArray) -> None:
+  """Setup the class the first time the instance is called.
+
+  This will:
+
+  * Validate the `@dataclass(frozen=True)` is correctly applied
+  * Extract the types annotations, detect which fields are arrays or static,
+    and store the result in `_dca_fields_metadata`
+  * For static `DataclassArray` (class with only static fields), it will
+    add a dummy array field for compatibility with `.xnp`/`.shape` (so
+    methods works correctly and return the right shape/xnp when nested)
+
+  Args:
+    self: The dataclass to initialize
+  """
+  cls = type(self)
+
+  # Make sure the dataclass was registered and frozen
+  if not dataclasses.is_dataclass(cls) or not cls.__dataclass_params__.frozen:  # pytype: disable=attribute-error
+    raise ValueError(
+        '`dca.DataclassArray` need to be @dataclasses.dataclass(frozen=True)'
+    )
+
+  # The first time, compute typing annotations & metadata
+  # At this point, `ForwardRef` should have been resolved.
+  try:
+    hints = typing_extensions.get_type_hints(cls, include_extras=True)
+  except Exception as e:  # pylint: disable=broad-except
+    msg = (
+        f'Could not infer typing annotation of {cls.__qualname__} '
+        f'defined in {cls.__module__}:\n'
+    )
+    lines = [f' * {k}: {v!r}' for k, v in cls.__annotations__.items()]
+    lines = '\n'.join(lines)
+
+    epy.reraise(e, prefix=msg + lines + '\n')
+
+  # TODO(epot): Remove restriction once pytype supports `datclass_transform`
+  # and `dca` automatically apply the `@dataclasses.dataclass`
+  if _DUMMY_ARRAY_FIELD in cls.__dataclass_fields__:  # pytype: disable=attribute-error
+    raise NotImplementedError(
+        'Suclassing of DataclassArray with no array field is not supported '
+        'after an instance of the class was created. Error raised for '
+        f'{cls.__qualname__}'
+    )
+
+  dca_fields_metadata = {
+      f.name: _make_field_metadata(f, hints) for f in dataclasses.fields(cls)
+  }
+  dca_fields_metadata = {  # Filter `None` values (static fields)
+      k: v for k, v in dca_fields_metadata.items() if v is not None
+  }
+  if not dca_fields_metadata:
+    # DataclassArray without any array fields
+    # Hack: To support `.xnp`, `.shape`, we add a dummy empty field which
+    # is propagated by the various ops.
+    dca_fields_metadata[_DUMMY_ARRAY_FIELD] = _ArrayFieldMetadata(
+        inner_shape_non_static=(),
+        dtype=np.float32,
+    )
+    default_dummy_array = np.zeros((), dtype=np.float32)
+    _add_field_to_dataclass(
+        cls, _DUMMY_ARRAY_FIELD, default=default_dummy_array
+    )
+    # Because we're in `__init__`, so also update the current call
+    self._setattr(_DUMMY_ARRAY_FIELD, default_dummy_array)  # pylint: disable=protected-access
+
+  cls._dca_fields_metadata = (  # pylint: disable=protected-access
+      dca_fields_metadata
+  )
+
+
+def _add_field_to_dataclass(cls, name: str, default: Any) -> None:
+  """Add a new field to the current dataset."""
+  # Make sure to not update the parent class
+  # Otherwise we could even accidentally update `dca.DataclassArray`
+  if '__dataclass_fields__' not in cls.__dict__:
+    # TODO(epot): Remove the limitation once `dataclasses.dataclass` is
+    # automatically applied
+    raise ValueError(
+        f'{cls.__name__} is not a `@dataclasses.dataclass(frozen=True)`'
+    )
+  assert name not in cls.__dataclass_fields__  # pytype: disable=attribute-error
+
+  # Ideally, we want init=False, so sub-dataclass ignore this field
+  # but this makes `.replace` fail
+  field = dataclasses.field(default=default, init=True, repr=False)
+  field.__set_name__(cls, name)
+  field.name = name
+  field.type = Any
+  field._field_type = dataclasses._FIELD  # pylint: disable=protected-access  # pytype: disable=module-attr
+  cls.__dataclass_fields__[name] = field  # pytype: disable=attribute-error
+
+  original_init = cls.__init__
+
+  @functools.wraps(original_init)
+  def new_init(self, **kwargs: Any):
+    self._setattr(name, kwargs.pop(name, default))  # pylint: disable=protected-access
+    return original_init(self, **kwargs)
+
+  cls.__init__ = new_init
 
 
 def _infer_xnp(xnps: dict[enp.NpModule, list[str]]) -> enp.NpModule:
@@ -913,7 +994,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     elif (
         isinstance(self.value, DataclassArray) and not self.value._array_fields  # pylint: disable=protected-access
     ):
-      # Nested dataclass case (if all attributes are `None`, so no active
+      # Nested dataclass case (if all attributes are `object`, so no active
       # array fields)
       return True
     return False
