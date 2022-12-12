@@ -2,7 +2,7 @@
 name = "dataclass_array"
 description = "Dataclasses that behave like numpy arrays (with indexing, slicing, vectorization)."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {file = "LICENSE"}
 authors = [{name = "dataclass_array team", email="dataclass_array@google.com"}]
 classifiers = [
