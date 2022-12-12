@@ -142,12 +142,68 @@ class Nested(dca.DataclassArray):
     Isometrie.assert_val(p.iso_batched, shape=shape + (3, 7), xnp=xnp)
 
 
+@dataclasses.dataclass(frozen=True)
+class OnlyStatic(dca.DataclassArray):
+  """Dataclass with no array fields."""
+
+  x: int
+  y: int
+
+  @staticmethod
+  def make(shape: Shape, xnp: enp.NpModule) -> OnlyStatic:
+    """Construct the dataclass array with the given shape."""
+
+    val = OnlyStatic(
+        x=0,
+        y=1,
+    )
+    assert val.shape == ()  # pylint: disable=g-explicit-bool-comparison
+    assert val.xnp == np
+
+    return val.broadcast_to(shape).as_xnp(xnp)
+
+  @staticmethod
+  def assert_val(p: OnlyStatic, shape: Shape, xnp: enp.NpModule = None):
+    """Validate the point."""
+    xnp = xnp or np
+    assert isinstance(p, OnlyStatic)
+    _assert_common(p, shape=shape, xnp=xnp)
+    assert p.x == 0
+    assert p.y == 1
+
+
+@dataclasses.dataclass(frozen=True)
+class NestedOnlyStatic(dca.DataclassArray):
+  """Dataclass with only nested array fields."""
+
+  s0: OnlyStatic
+  s1: OnlyStatic
+
+  @staticmethod
+  def make(shape: Shape, xnp: enp.NpModule) -> NestedOnlyStatic:
+    """Construct the dataclass array with the given shape."""
+    return NestedOnlyStatic(
+        s0=OnlyStatic(x=0, y=1).as_xnp(xnp).broadcast_to(shape),
+        s1=OnlyStatic(x=0, y=1).broadcast_to(shape),
+    )
+
+  @staticmethod
+  def assert_val(p: NestedOnlyStatic, shape: Shape, xnp: enp.NpModule = None):
+    """Validate the point."""
+    xnp = xnp or np
+    assert isinstance(p, NestedOnlyStatic)
+    _assert_common(p, shape=shape, xnp=xnp)
+    OnlyStatic.assert_val(p.s0, shape=shape, xnp=xnp)
+    OnlyStatic.assert_val(p.s1, shape=shape, xnp=xnp)
+
+
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
 class WithStatic(dca.DataclassArray):
   """Mix of static and array fields."""
 
   static: str
+  nested_static: NestedOnlyStatic
   x: f32['... 3']
   y: Any = dca.field(shape=(2, 2), dtype=np.float32)
 
@@ -155,6 +211,7 @@ class WithStatic(dca.DataclassArray):
   def make(shape: Shape, xnp: enp.NpModule) -> WithStatic:
     """Construct the dataclass array with the given shape."""
     return WithStatic(
+        nested_static=NestedOnlyStatic.make(shape, xnp),
         x=xnp.zeros(shape + (3,)),
         y=xnp.zeros(shape + (2, 2)),
         static='abc',
@@ -166,6 +223,7 @@ class WithStatic(dca.DataclassArray):
     xnp = xnp or np
     assert isinstance(p, WithStatic)
     _assert_common(p, shape=shape, xnp=xnp)
+    NestedOnlyStatic.assert_val(p.nested_static, shape, xnp=xnp)
     assert p.x.shape == shape + (3,)
     assert p.y.shape == shape + (2, 2)
     assert p.x.dtype == np.float32
@@ -199,6 +257,8 @@ parametrize_dataclass_arrays = pytest.mark.parametrize(
         Point,
         Isometrie,
         Nested,
+        OnlyStatic,
+        NestedOnlyStatic,
         WithStatic,
     ],
 )
@@ -237,9 +297,11 @@ def test_scalar_shape(
 ):
   p = dca_cls.make(shape=(), xnp=xnp)
   dca_cls.assert_val(p, (), xnp=xnp)
+  dca_cls.assert_val(p.replace(), (), xnp=xnp)
+  dca_cls.assert_val(p.broadcast_to((2,)).replace(), (2,), xnp=xnp)
   dca_cls.assert_val(p.reshape((1, 1, 1)), (1, 1, 1), xnp=xnp)
   dca_cls.assert_val(p.flatten(), (1,), xnp=xnp)
-  dca_cls.assert_val(p.broadcast_to((7, 4, 3)), (7, 4, 3), xnp=xnp)
+  dca_cls.assert_val(p.broadcast_to((1, 3, 2)), (1, 3, 2), xnp=xnp)
 
   with pytest.raises(TypeError, match='iteration over'):
     _ = list(p)
@@ -370,6 +432,8 @@ def test_wrong_input_type():
 def test_isometrie_wrong_input():
   # Incompatible types
   with pytest.raises(ValueError, match='Conflicting numpy types'):
+    # TODO(epot): Could also test with `.replace()`, and check that nested
+    # static behave as expected
     _ = Isometrie(
         r=enp.lazy.jnp.zeros((3, 3)),
         t=enp.lazy.tnp.zeros((2,)),
@@ -488,6 +552,8 @@ def test_convert(
   assert p.as_xnp(np).xnp is enp.lazy.np
   assert p.as_xnp(enp.lazy.jnp).xnp is enp.lazy.jnp
   assert p.as_xnp(enp.lazy.tnp).xnp is enp.lazy.tnp
+  # Make sure the nested class are also updated
+  dca_cls.assert_val(p.as_jax(), (2,), xnp=enp.lazy.jnp)
 
 
 @enp.testing.parametrize_xnp()
@@ -521,9 +587,7 @@ def test_infer_np(xnp: enp.NpModule):
 
 
 @parametrize_dataclass_arrays
-def test_jax_tree_map(
-    dca_cls: DcaTest,
-):
+def test_jax_tree_map(dca_cls: DcaTest):
   p = dca_cls.make(shape=(3,), xnp=np)
   p = enp.lazy.jax.tree_map(lambda x: x[None, ...], p)
   dca_cls.assert_val(p, (1, 3), xnp=np)
