@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, Callable
+from typing import Any
 
 import dataclass_array as dca
 from dataclass_array.typing import FloatArray, IntArray, f32, i32  # pylint: disable=g-multiple-import
@@ -33,18 +33,47 @@ set_tnp = enp.testing.set_tnp
 # TODO(epot): Test dtype `complex`, `str`
 
 
+class DcaTest:
+
+  @staticmethod
+  def make(shape: Shape, xnp: enp.NpModule) -> dca.DataclassArray:
+    """Construct the dataclass array with the given shape."""
+    raise NotImplementedError
+
+  @staticmethod
+  def assert_val(
+      p: dca.DataclassArray, shape: Shape, xnp: enp.NpModule = None
+  ) -> None:
+    """Test that the value has expected shape/xnp."""
+    raise NotImplementedError
+
+
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
 class Point(dca.DataclassArray):
   x: f32['*shape']
   y: f32['*shape']
 
+  @staticmethod
+  def make(shape: Shape, xnp: enp.NpModule) -> Point:
+    """Construct the dataclass array with the given shape."""
+    return Point(
+        x=xnp.zeros(shape),
+        y=xnp.zeros(shape),
+    )
 
-@dca.dataclass_array(broadcast=True, cast_dtype=True)
-@dataclasses.dataclass(frozen=True)
-class PointWrapper(dca.DataclassArray):
-  pts: Point
-  rgb: f32['*shape 3']
+  @staticmethod
+  def assert_val(p: Point, shape: Shape, xnp: enp.NpModule = None):
+    """Validate the point."""
+    xnp = xnp or np
+    assert isinstance(p, Point)
+    _assert_common(p, shape=shape, xnp=xnp)
+    assert p.x.shape == shape
+    assert p.y.shape == shape
+    assert p.x.dtype == np.float32
+    assert p.y.dtype == np.float32
+    assert isinstance(p.x, xnp.ndarray)
+    assert isinstance(p.y, xnp.ndarray)
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
@@ -52,6 +81,27 @@ class PointWrapper(dca.DataclassArray):
 class Isometrie(dca.DataclassArray):
   r: f32['... 3 3']
   t: i32[..., 2]
+
+  @staticmethod
+  def make(shape: Shape, xnp: enp.NpModule) -> Isometrie:
+    """Construct the dataclass array with the given shape."""
+    return Isometrie(
+        r=xnp.zeros(shape + (3, 3)),
+        t=xnp.zeros(shape + (2,)),
+    )
+
+  @staticmethod
+  def assert_val(p: Isometrie, shape: Shape, xnp: enp.NpModule = None):
+    """Validate the point."""
+    xnp = xnp or np
+    assert isinstance(p, Isometrie)
+    _assert_common(p, shape=shape, xnp=xnp)
+    assert p.r.shape == shape + (3, 3)
+    assert p.t.shape == shape + (2,)
+    assert p.r.dtype == np.float32
+    assert p.t.dtype == np.int32
+    assert isinstance(p.r, xnp.ndarray)
+    assert isinstance(p.t, xnp.ndarray)
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
@@ -63,6 +113,34 @@ class Nested(dca.DataclassArray):
   pt: Point = dca.field(shape=(3,), dtype=Point)
   # pytype: enable=annotation-type-mismatch
 
+  @staticmethod
+  def make(shape: Shape, xnp: enp.NpModule) -> Nested:
+    """Construct the dataclass array with the given shape."""
+    return Nested(
+        pt=Point(
+            x=xnp.zeros(shape + (3,)),
+            y=xnp.zeros(shape + (3,)),
+        ),
+        iso=Isometrie(
+            r=xnp.zeros(shape + (3, 3)),
+            t=xnp.zeros(shape + (2,)),
+        ),
+        iso_batched=Isometrie(
+            r=xnp.zeros(shape + (3, 7, 3, 3)),
+            t=xnp.zeros(shape + (3, 7, 2)),
+        ),
+    )
+
+  @staticmethod
+  def assert_val(p: Nested, shape: Shape, xnp: enp.NpModule = None):
+    """Validate the nested."""
+    xnp = xnp or np
+    assert isinstance(p, Nested)
+    _assert_common(p, shape=shape, xnp=xnp)
+    Point.assert_val(p.pt, shape=shape + (3,), xnp=xnp)
+    Isometrie.assert_val(p.iso, shape=shape, xnp=xnp)
+    Isometrie.assert_val(p.iso_batched, shape=shape + (3, 7), xnp=xnp)
+
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
 @dataclasses.dataclass(frozen=True)
@@ -73,57 +151,30 @@ class WithStatic(dca.DataclassArray):
   x: f32['... 3']
   y: Any = dca.field(shape=(2, 2), dtype=np.float32)
 
+  @staticmethod
+  def make(shape: Shape, xnp: enp.NpModule) -> WithStatic:
+    """Construct the dataclass array with the given shape."""
+    return WithStatic(
+        x=xnp.zeros(shape + (3,)),
+        y=xnp.zeros(shape + (2, 2)),
+        static='abc',
+    )
 
-def _assert_point(p: Point, shape: Shape, xnp: enp.NpModule = None):
-  """Validate the point."""
-  xnp = xnp or np
-  assert isinstance(p, Point)
-  _assert_common(p, shape=shape, xnp=xnp)
-  assert p.x.shape == shape
-  assert p.y.shape == shape
-  assert p.x.dtype == np.float32
-  assert p.y.dtype == np.float32
-  assert isinstance(p.x, xnp.ndarray)
-  assert isinstance(p.y, xnp.ndarray)
-
-
-def _assert_isometrie(p: Isometrie, shape: Shape, xnp: enp.NpModule = None):
-  """Validate the point."""
-  xnp = xnp or np
-  assert isinstance(p, Isometrie)
-  _assert_common(p, shape=shape, xnp=xnp)
-  assert p.r.shape == shape + (3, 3)
-  assert p.t.shape == shape + (2,)
-  assert p.r.dtype == np.float32
-  assert p.t.dtype == np.int32
-  assert isinstance(p.r, xnp.ndarray)
-  assert isinstance(p.t, xnp.ndarray)
-
-
-def _assert_nested(p: Nested, shape: Shape, xnp: enp.NpModule = None):
-  """Validate the nested."""
-  xnp = xnp or np
-  assert isinstance(p, Nested)
-  _assert_common(p, shape=shape, xnp=xnp)
-  _assert_point(p.pt, shape=shape + (3,), xnp=xnp)
-  _assert_isometrie(p.iso, shape=shape, xnp=xnp)
-  _assert_isometrie(p.iso_batched, shape=shape + (3, 7), xnp=xnp)
-
-
-def _assert_with_static(p: WithStatic, shape: Shape, xnp: enp.NpModule = None):
-  """Validate the point."""
-  xnp = xnp or np
-  assert isinstance(p, WithStatic)
-  _assert_common(p, shape=shape, xnp=xnp)
-  assert p.x.shape == shape + (3,)
-  assert p.y.shape == shape + (2, 2)
-  assert p.x.dtype == np.float32
-  assert p.y.dtype == np.float32
-  assert isinstance(p.x, xnp.ndarray)
-  assert isinstance(p.y, xnp.ndarray)
-  # Static field is correctly forwarded
-  assert isinstance(p.static, str)
-  assert p.static == 'abc'
+  @staticmethod
+  def assert_val(p: WithStatic, shape: Shape, xnp: enp.NpModule = None):
+    """Validate the point."""
+    xnp = xnp or np
+    assert isinstance(p, WithStatic)
+    _assert_common(p, shape=shape, xnp=xnp)
+    assert p.x.shape == shape + (3,)
+    assert p.y.shape == shape + (2, 2)
+    assert p.x.dtype == np.float32
+    assert p.y.dtype == np.float32
+    assert isinstance(p.x, xnp.ndarray)
+    assert isinstance(p.y, xnp.ndarray)
+    # Static field is correctly forwarded
+    assert isinstance(p.static, str)
+    assert p.static == 'abc'
 
 
 def _assert_common(p: dca.DataclassArray, shape: Shape, xnp: enp.NpModule):
@@ -142,62 +193,13 @@ def _assert_common(p: dca.DataclassArray, shape: Shape, xnp: enp.NpModule):
       _ = len(p)
 
 
-def _make_point(shape: Shape, xnp: enp.NpModule) -> Point:
-  """Construct the dataclass array with the given shape."""
-  return Point(
-      x=xnp.zeros(shape),
-      y=xnp.zeros(shape),
-  )
-
-
-def _make_isometrie(shape: Shape, xnp: enp.NpModule) -> Isometrie:
-  """Construct the dataclass array with the given shape."""
-  return Isometrie(
-      r=xnp.zeros(shape + (3, 3)),
-      t=xnp.zeros(shape + (2,)),
-  )
-
-
-def _make_nested(shape: Shape, xnp: enp.NpModule) -> Nested:
-  """Construct the dataclass array with the given shape."""
-  return Nested(
-      pt=Point(
-          x=xnp.zeros(shape + (3,)),
-          y=xnp.zeros(shape + (3,)),
-      ),
-      iso=Isometrie(
-          r=xnp.zeros(shape + (3, 3)),
-          t=xnp.zeros(shape + (2,)),
-      ),
-      iso_batched=Isometrie(
-          r=xnp.zeros(shape + (3, 7, 3, 3)),
-          t=xnp.zeros(shape + (3, 7, 2)),
-      ),
-  )
-
-
-def _make_with_static(shape: Shape, xnp: enp.NpModule) -> WithStatic:
-  """Construct the dataclass array with the given shape."""
-  return WithStatic(
-      x=xnp.zeros(shape + (3,)),
-      y=xnp.zeros(shape + (2, 2)),
-      static='abc',
-  )
-
-
 parametrize_dataclass_arrays = pytest.mark.parametrize(
-    ['make_dc_array_fn', 'assert_dc_array_fn'],
+    'dca_cls',
     [
-        (_make_point, _assert_point),
-        (_make_isometrie, _assert_isometrie),
-        (_make_nested, _assert_nested),
-        (_make_with_static, _assert_with_static),
-    ],
-    ids=[
-        'point',
-        'isometrie',
-        'nested',
-        'with_static',
+        Point,
+        Isometrie,
+        Nested,
+        WithStatic,
     ],
 )
 
@@ -224,21 +226,20 @@ def test_point_infered_np(
     xnp = np
 
   p = Point(x=x, y=y)
-  _assert_point(p, shape, xnp=xnp)
+  Point.assert_val(p, shape, xnp=xnp)
 
 
 @enp.testing.parametrize_xnp()
 @parametrize_dataclass_arrays
 def test_scalar_shape(
     xnp: enp.NpModule,
-    make_dc_array_fn: Callable[..., dca.DataclassArray],
-    assert_dc_array_fn: Callable[..., None],
+    dca_cls: DcaTest,
 ):
-  p = make_dc_array_fn(shape=(), xnp=xnp)
-  assert_dc_array_fn(p, (), xnp=xnp)
-  assert_dc_array_fn(p.reshape((1, 1, 1)), (1, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p.flatten(), (1,), xnp=xnp)
-  assert_dc_array_fn(p.broadcast_to((7, 4, 3)), (7, 4, 3), xnp=xnp)
+  p = dca_cls.make(shape=(), xnp=xnp)
+  dca_cls.assert_val(p, (), xnp=xnp)
+  dca_cls.assert_val(p.reshape((1, 1, 1)), (1, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p.flatten(), (1,), xnp=xnp)
+  dca_cls.assert_val(p.broadcast_to((7, 4, 3)), (7, 4, 3), xnp=xnp)
 
   with pytest.raises(TypeError, match='iteration over'):
     _ = list(p)
@@ -246,89 +247,86 @@ def test_scalar_shape(
   with pytest.raises(IndexError, match='too many indices for array'):
     _ = p[0]
 
-  assert_dc_array_fn(p[...], (), xnp=xnp)  # Index on ... is a no-op
+  dca_cls.assert_val(p[...], (), xnp=xnp)  # Index on ... is a no-op
 
-  assert_dc_array_fn(dca.stack([p, p, p]), (3,), xnp=xnp)
+  dca_cls.assert_val(dca.stack([p, p, p]), (3,), xnp=xnp)
 
 
 @enp.testing.parametrize_xnp()
 @parametrize_dataclass_arrays
 def test_simple_shape(
     xnp: enp.NpModule,
-    make_dc_array_fn: Callable[..., dca.DataclassArray],
-    assert_dc_array_fn: Callable[..., None],
+    dca_cls: DcaTest,
 ):
-  p = make_dc_array_fn(shape=(3, 2), xnp=xnp)
-  assert_dc_array_fn(p, (3, 2), xnp=xnp)
-  assert_dc_array_fn(p.reshape((2, 1, 3, 1, 1)), (2, 1, 3, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p.flatten(), (6,), xnp=xnp)
-  assert_dc_array_fn(p.broadcast_to((7, 4, 3, 2)), (7, 4, 3, 2), xnp=xnp)
-  assert_dc_array_fn(p[0], (2,), xnp=xnp)
-  assert_dc_array_fn(p[1, 1], (), xnp=xnp)
-  assert_dc_array_fn(p[:, 0], (3,), xnp=xnp)
-  assert_dc_array_fn(p[..., 0], (3,), xnp=xnp)
-  assert_dc_array_fn(p[0, ...], (2,), xnp=xnp)
-  assert_dc_array_fn(p[...], (3, 2), xnp=xnp)
+  p = dca_cls.make(shape=(3, 2), xnp=xnp)
+  dca_cls.assert_val(p, (3, 2), xnp=xnp)
+  dca_cls.assert_val(p.reshape((2, 1, 3, 1, 1)), (2, 1, 3, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p.flatten(), (6,), xnp=xnp)
+  dca_cls.assert_val(p.broadcast_to((7, 4, 3, 2)), (7, 4, 3, 2), xnp=xnp)
+  dca_cls.assert_val(p[0], (2,), xnp=xnp)
+  dca_cls.assert_val(p[1, 1], (), xnp=xnp)
+  dca_cls.assert_val(p[:, 0], (3,), xnp=xnp)
+  dca_cls.assert_val(p[..., 0], (3,), xnp=xnp)
+  dca_cls.assert_val(p[0, ...], (2,), xnp=xnp)
+  dca_cls.assert_val(p[...], (3, 2), xnp=xnp)
 
   p0, p1, p2 = list(p)
-  assert_dc_array_fn(p0, (2,), xnp=xnp)
-  assert_dc_array_fn(p1, (2,), xnp=xnp)
-  assert_dc_array_fn(p2, (2,), xnp=xnp)
+  dca_cls.assert_val(p0, (2,), xnp=xnp)
+  dca_cls.assert_val(p1, (2,), xnp=xnp)
+  dca_cls.assert_val(p2, (2,), xnp=xnp)
 
-  assert_dc_array_fn(dca.stack([p0, p0, p1, p1]), (4, 2), xnp=xnp)
+  dca_cls.assert_val(dca.stack([p0, p0, p1, p1]), (4, 2), xnp=xnp)
 
 
 @enp.testing.parametrize_xnp()
 @parametrize_dataclass_arrays
 def test_complex_shape(
     xnp: enp.NpModule,
-    make_dc_array_fn: Callable[..., dca.DataclassArray],
-    assert_dc_array_fn: Callable[..., None],
+    dca_cls: DcaTest,
 ):
-  p = make_dc_array_fn(shape=(3, 2, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p, (3, 2, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p.reshape((2, 1, 3, 1, 1)), (2, 1, 3, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p.flatten(), (6,), xnp=xnp)
-  assert_dc_array_fn(p.broadcast_to((7, 3, 2, 1, 1)), (7, 3, 2, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p[0], (2, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p[1, 1], (1, 1), xnp=xnp)
-  assert_dc_array_fn(p[:, 0], (3, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p[:, 0, 0, :], (3, 1), xnp=xnp)
-  assert_dc_array_fn(p[..., 0], (3, 2, 1), xnp=xnp)
-  assert_dc_array_fn(p[0, ...], (2, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p[0, ..., 0], (2, 1), xnp=xnp)
+  p = dca_cls.make(shape=(3, 2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p, (3, 2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p.reshape((2, 1, 3, 1, 1)), (2, 1, 3, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p.flatten(), (6,), xnp=xnp)
+  dca_cls.assert_val(p.broadcast_to((7, 3, 2, 1, 1)), (7, 3, 2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p[0], (2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p[1, 1], (1, 1), xnp=xnp)
+  dca_cls.assert_val(p[:, 0], (3, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p[:, 0, 0, :], (3, 1), xnp=xnp)
+  dca_cls.assert_val(p[..., 0], (3, 2, 1), xnp=xnp)
+  dca_cls.assert_val(p[0, ...], (2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p[0, ..., 0], (2, 1), xnp=xnp)
   # Indexing through np.array also supported
-  assert_dc_array_fn(
+  dca_cls.assert_val(
       p.flatten()[np.ones(p.size, dtype=np.bool_)],
       (p.size,),
       xnp=xnp,
   )
-  assert_dc_array_fn(
+  dca_cls.assert_val(
       p.flatten()[xnp.ones(p.size, dtype=np.bool_)],
       (p.size,),
       xnp=xnp,
   )
 
   p0, p1, p2 = list(p)
-  assert_dc_array_fn(p0, (2, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p1, (2, 1, 1), xnp=xnp)
-  assert_dc_array_fn(p2, (2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p0, (2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p1, (2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(p2, (2, 1, 1), xnp=xnp)
 
-  assert_dc_array_fn(dca.stack([p0, p0, p1, p1]), (4, 2, 1, 1), xnp=xnp)
+  dca_cls.assert_val(dca.stack([p0, p0, p1, p1]), (4, 2, 1, 1), xnp=xnp)
 
 
 @enp.testing.parametrize_xnp()
 @parametrize_dataclass_arrays
 def test_einops_reshape(
     xnp: enp.NpModule,
-    make_dc_array_fn: Callable[..., dca.DataclassArray],
-    assert_dc_array_fn: Callable[..., None],
+    dca_cls: DcaTest,
 ):
-  p = make_dc_array_fn(shape=(1, 2, 4), xnp=xnp)
+  p = dca_cls.make(shape=(1, 2, 4), xnp=xnp)
 
-  assert_dc_array_fn(p, (1, 2, 4), xnp=xnp)
-  assert_dc_array_fn(p.reshape('b h w -> b (h w)'), (1, 2 * 4), xnp=xnp)
-  assert_dc_array_fn(
+  dca_cls.assert_val(p, (1, 2, 4), xnp=xnp)
+  dca_cls.assert_val(p.reshape('b h w -> b (h w)'), (1, 2 * 4), xnp=xnp)
+  dca_cls.assert_val(
       p.reshape('b h (w0 w1) -> b w0 h w1', w0=2, w1=2),
       (1, 2, 2, 2),
       xnp=xnp,
@@ -351,6 +349,12 @@ def test_wrong_input_type():
         x=1,
         y=pts,
     )
+
+  @dca.dataclass_array(broadcast=True, cast_dtype=True)
+  @dataclasses.dataclass(frozen=True)
+  class PointWrapper(dca.DataclassArray):
+    pts: Point
+    rgb: f32['*shape 3']
 
   # ndarray instead of DataclassArray
   with pytest.raises(TypeError, match='Invalid PointWrapper.pts:'):
@@ -474,11 +478,9 @@ def test_absolute_axis(xnp: enp.NpModule):
 @parametrize_dataclass_arrays
 def test_convert(
     xnp: enp.NpModule,
-    make_dc_array_fn: Callable[..., dca.DataclassArray],
-    assert_dc_array_fn: Callable[..., None],
+    dca_cls: DcaTest,
 ):
-  del assert_dc_array_fn
-  p = make_dc_array_fn(xnp=xnp, shape=(2,))
+  p = dca_cls.make(xnp=xnp, shape=(2,))
   assert p.xnp is xnp
   assert p.as_np().xnp is enp.lazy.np
   assert p.as_jax().xnp is enp.lazy.jnp
@@ -508,7 +510,7 @@ def test_broadcast(xnp: enp.NpModule):
           t=xnp.zeros((3, 7) + (2,)),
       ),
   )
-  _assert_nested(p, shape=broadcast_shape, xnp=xnp)
+  Nested.assert_val(p, shape=broadcast_shape, xnp=xnp)
 
 
 @enp.testing.parametrize_xnp()
@@ -520,12 +522,11 @@ def test_infer_np(xnp: enp.NpModule):
 
 @parametrize_dataclass_arrays
 def test_jax_tree_map(
-    make_dc_array_fn: Callable[..., dca.DataclassArray],
-    assert_dc_array_fn: Callable[..., None],
+    dca_cls: DcaTest,
 ):
-  p = make_dc_array_fn(shape=(3,), xnp=np)
+  p = dca_cls.make(shape=(3,), xnp=np)
   p = enp.lazy.jax.tree_map(lambda x: x[None, ...], p)
-  assert_dc_array_fn(p, (1, 3), xnp=np)
+  dca_cls.assert_val(p, (1, 3), xnp=np)
 
 
 def test_jax_vmap():
@@ -537,9 +538,9 @@ def test_jax_vmap():
     assert p.shape == ()  # pylint:disable=g-explicit-bool-comparison
     return p.replace(x=p.x + 1)
 
-  x = _make_with_static((batch_shape,), xnp=enp.lazy.jnp)
+  x = WithStatic.make((batch_shape,), xnp=enp.lazy.jnp)
   y = fn(x)
-  _assert_with_static(y, (batch_shape,), xnp=enp.lazy.jnp)
+  WithStatic.assert_val(y, (batch_shape,), xnp=enp.lazy.jnp)
   # pos was updated
   np.testing.assert_allclose(y.x, np.ones((batch_shape, 3)))
   np.testing.assert_allclose(y.y, np.zeros((batch_shape, 2, 2)))
