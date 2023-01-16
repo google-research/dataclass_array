@@ -43,6 +43,6 @@ from dataclass_array import testing
 
 # A new PyPI release will be pushed everytime `__version__` is increased
 # When changing this, also update the CHANGELOG.md
-__version__ = '1.2.1'
+__version__ = '1.3.0'
 
 del sys, pytest
