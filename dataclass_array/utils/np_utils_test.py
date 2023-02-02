@@ -22,6 +22,9 @@ from etils import enp
 import numpy as np
 import pytest
 
+# Activate the fixture
+enable_torch_tf_np_mode = enp.testing.enable_torch_tf_np_mode
+
 
 @enp.testing.parametrize_xnp()
 def test_get_xnp(xnp: enp.NpModule):

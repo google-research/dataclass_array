@@ -34,7 +34,7 @@ X0 = 4
 X1 = 5
 
 # Activate the fixture
-set_tnp = enp.testing.set_tnp
+enable_torch_tf_np_mode = enp.testing.enable_torch_tf_np_mode
 
 
 @pytest.mark.parametrize(
@@ -179,7 +179,9 @@ def test_replace_dca(xnp: enp.NpModule):
   assert a.x == 5
 
   # Vectorization supported
-  if xnp != tnp:
+  if xnp not in [
+      tnp,
+  ]:
     a = a.fn()
   assert a.xnp is xnp
   assert a.shape == (3,)

@@ -28,7 +28,7 @@ import pytest
 import tensorflow as tf
 
 # Activate the fixture
-set_tnp = enp.testing.set_tnp
+enable_torch_tf_np_mode = enp.testing.enable_torch_tf_np_mode
 
 # TODO(epot): Test dtype `complex`, `str`
 
@@ -70,8 +70,8 @@ class Point(dca.DataclassArray):
     _assert_common(p, shape=shape, xnp=xnp)
     assert p.x.shape == shape
     assert p.y.shape == shape
-    assert p.x.dtype == np.float32
-    assert p.y.dtype == np.float32
+    assert enp.lazy.as_dtype(p.x.dtype) == np.float32
+    assert enp.lazy.as_dtype(p.y.dtype) == np.float32
     assert isinstance(p.x, xnp.ndarray)
     assert isinstance(p.y, xnp.ndarray)
 
@@ -98,8 +98,8 @@ class Isometrie(dca.DataclassArray):
     _assert_common(p, shape=shape, xnp=xnp)
     assert p.r.shape == shape + (3, 3)
     assert p.t.shape == shape + (2,)
-    assert p.r.dtype == np.float32
-    assert p.t.dtype == np.int32
+    assert enp.lazy.as_dtype(p.r.dtype) == np.float32
+    assert enp.lazy.as_dtype(p.t.dtype) == np.int32
     assert isinstance(p.r, xnp.ndarray)
     assert isinstance(p.t, xnp.ndarray)
 
@@ -226,8 +226,8 @@ class WithStatic(dca.DataclassArray):
     NestedOnlyStatic.assert_val(p.nested_static, shape, xnp=xnp)
     assert p.x.shape == shape + (3,)
     assert p.y.shape == shape + (2, 2)
-    assert p.x.dtype == np.float32
-    assert p.y.dtype == np.float32
+    assert enp.lazy.as_dtype(p.x.dtype) == np.float32
+    assert enp.lazy.as_dtype(p.y.dtype) == np.float32
     assert isinstance(p.x, xnp.ndarray)
     assert isinstance(p.y, xnp.ndarray)
     # Static field is correctly forwarded
@@ -546,12 +546,15 @@ def test_convert(
 ):
   p = dca_cls.make(xnp=xnp, shape=(2,))
   assert p.xnp is xnp
+
   assert p.as_np().xnp is enp.lazy.np
   assert p.as_jax().xnp is enp.lazy.jnp
   assert p.as_tf().xnp is enp.lazy.tnp
+  assert p.as_torch().xnp is enp.lazy.torch
   assert p.as_xnp(np).xnp is enp.lazy.np
   assert p.as_xnp(enp.lazy.jnp).xnp is enp.lazy.jnp
   assert p.as_xnp(enp.lazy.tnp).xnp is enp.lazy.tnp
+  assert p.as_xnp(enp.lazy.torch).xnp is enp.lazy.torch
   # Make sure the nested class are also updated
   dca_cls.assert_val(p.as_jax(), (2,), xnp=enp.lazy.jnp)
 
@@ -587,24 +590,44 @@ def test_infer_np(xnp: enp.NpModule):
 
 
 @parametrize_dataclass_arrays
-def test_jax_tree_map(dca_cls: DcaTest):
+@pytest.mark.parametrize(
+    'tree_map',
+    [
+        enp.lazy.jax.tree_map,
+        enp.lazy.torch.utils._pytree.tree_map,
+    ],
+)
+def test_torch_tree_map(tree_map, dca_cls: DcaTest):
   p = dca_cls.make(shape=(3,), xnp=np)
-  p = enp.lazy.jax.tree_map(lambda x: x[None, ...], p)
+  p = tree_map(lambda x: x[None, ...], p)
   dca_cls.assert_val(p, (1, 3), xnp=np)
 
 
-def test_jax_vmap():
+@enp.testing.parametrize_xnp(
+    restrict=[
+        'jnp',
+        'torch',
+    ]
+)
+def test_vmap(xnp: enp.NpModule):
+  import functorch
+
+  vmap_fn = {
+      enp.lazy.jnp: enp.lazy.jax.vmap,
+      enp.lazy.torch: functorch.vmap,
+  }[xnp]
+
   batch_shape = 3
 
-  @enp.lazy.jax.vmap
+  @vmap_fn
   def fn(p: WithStatic) -> WithStatic:
     assert isinstance(p, WithStatic)
     assert p.shape == ()  # pylint:disable=g-explicit-bool-comparison
     return p.replace(x=p.x + 1)
 
-  x = WithStatic.make((batch_shape,), xnp=enp.lazy.jnp)
+  x = WithStatic.make((batch_shape,), xnp=xnp)
   y = fn(x)
-  WithStatic.assert_val(y, (batch_shape,), xnp=enp.lazy.jnp)
+  WithStatic.assert_val(y, (batch_shape,), xnp=xnp)
   # pos was updated
   np.testing.assert_allclose(y.x, np.ones((batch_shape, 3)))
   np.testing.assert_allclose(y.y, np.zeros((batch_shape, 2, 2)))
@@ -628,8 +651,8 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
       y=xnp.array([1, 2, 3], dtype=np.uint8),
   )
   assert p.shape == (3,)
-  assert p.x.dtype == np.float16
-  assert p.y.dtype == np.uint8
+  assert enp.lazy.as_dtype(p.x.dtype) == np.float16
+  assert enp.lazy.as_dtype(p.y.dtype) == np.uint8
 
 
 @enp.testing.parametrize_xnp()
@@ -689,7 +712,13 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
   assert dca.stack([p, p]).shape == (2,) + batch_shape
 
   # Incompatible shape will raise an error
-  with pytest.raises((ValueError, tf.errors.InvalidArgumentError)):
+  expected_exception_cls = {
+      enp.lazy.np: ValueError,
+      enp.lazy.jnp: ValueError,
+      enp.lazy.tnp: tf.errors.InvalidArgumentError,
+      enp.lazy.torch: RuntimeError,
+  }
+  with pytest.raises(expected_exception_cls[xnp]):
     dca.stack([p, p2])
 
   if batch_shape:
