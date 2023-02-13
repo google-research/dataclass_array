@@ -195,8 +195,9 @@ class DataclassArray(metaclass=MetaDataclassArray):
     super().__init_subclass__(**kwargs)
     # TODO(epot): Could have smart __repr__ which display types if array have
     # too many values (maybe directly in `edc.field(repr=...)`).
-    edc.dataclass(kw_only=True, repr=True)(cls)
-    cls._dca_tree_map_registered = False
+    edc.dataclass(kw_only=True, repr=True, auto_cast=False)(cls)
+    cls._dca_jax_tree_registered = False
+    cls._dca_torch_tree_registered = False
     # Typing annotations have to be lazily evaluated (to support
     # `from __future__ import annotations` and forward reference)
     # To avoid costly `typing.get_type_hints` which perform `eval` and `str`
@@ -217,10 +218,20 @@ class DataclassArray(metaclass=MetaDataclassArray):
       _init_cls(self)
 
     # Register the tree_map here instead of `__init_subclass__` as `jax` may
-    # not have been registered yet during import
-    if enp.lazy.has_jax and not cls._dca_tree_map_registered:  # pylint: disable=protected-access
+    # not have been imported yet during import.
+    if enp.lazy.has_jax and not cls._dca_jax_tree_registered:  # pylint: disable=protected-access
       enp.lazy.jax.tree_util.register_pytree_node_class(cls)
-      cls._dca_tree_map_registered = True  # pylint: disable=protected-access
+      cls._dca_jax_tree_registered = True  # pylint: disable=protected-access
+
+    if enp.lazy.has_torch and not cls._dca_torch_tree_registered:  # pylint: disable=protected-access
+      # Note: Torch is updating it's tree API to make it public and use `optree`
+      # as backend: https://github.com/pytorch/pytorch/issues/65761
+      enp.lazy.torch.utils._pytree._register_pytree_node(  # pylint: disable=protected-access
+          cls,
+          flatten_fn=lambda a: a.tree_flatten(),
+          unflatten_fn=lambda vals, ctx: cls.tree_unflatten(ctx, vals),
+      )
+      cls._dca_torch_tree_registered = True  # pylint: disable=protected-access
 
     # Validate and normalize array fields
     # * Maybe cast (list, np) -> xnp
@@ -442,14 +453,28 @@ class DataclassArray(metaclass=MetaDataclassArray):
     """Returns the instance as containing `tf.Tensor`."""
     return self.as_xnp(enp.lazy.tnp)
 
+  def as_torch(self: _DcT) -> _DcT:
+    """Returns the instance as containing `torch.Tensor`."""
+    return self.as_xnp(enp.lazy.torch)
+
   def as_xnp(self: _DcT, xnp: enp.NpModule) -> _DcT:
     """Returns the instance as containing `xnp.ndarray`."""
     if xnp is self.xnp:  # No-op
       return self
+    # Direct `torch` <> `tf`/`jax` conversion not supported, so convert to
+    # `numpy`
+    if (
+        enp.lazy.has_torch
+        and xnp is enp.lazy.torch
+        or self.xnp is enp.lazy.torch
+    ):
+      array_fn = lambda f: xnp.asarray(np.asarray(f.value))
+    else:
+      array_fn = lambda f: xnp.asarray(f.value)
 
     # Update all childs
     new_self = self._map_field(
-        array_fn=lambda f: xnp.asarray(f.value),
+        array_fn=array_fn,
         dc_fn=lambda f: f.value.as_xnp(xnp),
     )
     return new_self
@@ -517,6 +542,17 @@ class DataclassArray(metaclass=MetaDataclassArray):
     if not xnps:
       return None
     xnp = _infer_xnp(xnps)
+
+    if (
+        enp.lazy.has_torch
+        and xnp is enp.lazy.torch
+        and not hasattr(enp.lazy.torch, '__etils_np_mode__')
+    ):
+      raise ValueError(
+          'torch support currently require to call:\n'
+          'import dataclass_array as dca\n'
+          'dca.activate_torch_support()'
+      )
 
     def _cast_field(f: _ArrayField) -> None:
       try:

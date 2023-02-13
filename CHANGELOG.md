@@ -23,6 +23,9 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Add `torch` support (experimental). Require to call
+    `dca.activate_torch_support()`
+
 ## [1.3.0] - 2023-01-16
 
 *   Added: Support for static `dca.DataclassArray` (dataclasses with only

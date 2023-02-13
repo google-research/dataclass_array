@@ -311,9 +311,19 @@ def _vmap_method(
   if xnp is enp.lazy.np:
     return _vmap_method_np(args, map_non_static=map_non_static)
   elif xnp is enp.lazy.jnp:
-    return _vmap_method_jnp(args, map_non_static=map_non_static)
+    return _vmap_method_jax_torch(
+        args,
+        map_non_static=map_non_static,
+        make_vmap_fn=_jax_vmap_cached,
+    )
   elif xnp is enp.lazy.tnp:
     return _vmap_method_tf(args, map_non_static=map_non_static)
+  elif xnp is enp.lazy.torch:
+    return _vmap_method_jax_torch(
+        args,
+        map_non_static=map_non_static,
+        make_vmap_fn=_torch_vmap_cached,
+    )
   raise TypeError(f'Invalid numpy module: {xnp}')
 
 
@@ -334,10 +344,11 @@ def _vmap_method_np(
   return tree_utils.tree_map(_stack, *outs)
 
 
-def _vmap_method_jnp(
+def _vmap_method_jax_torch(
     args: inspect_utils.BoundArgs[Any, _OutT],
     *,
     map_non_static: _MapNonStatic,
+    make_vmap_fn: Any,
 ) -> _OutT:
   """vectorization using `jax` backend."""
 
@@ -349,18 +360,32 @@ def _vmap_method_jnp(
   in_axes = tuple(arg.value for arg in in_axes_args)
 
   # Vectorize self and args
-  vfn = _vmap_cached(args.fn, in_axes=in_axes)
+  vfn = make_vmap_fn(args.fn, in_axes=in_axes)
 
   # Call `vfn(self, *args, **kwargs)`
   return args.call(vfn)
 
 
 @functools.lru_cache(maxsize=None)
-def _vmap_cached(fn: _FnT, *, in_axes) -> _FnT:
+def _jax_vmap_cached(fn: _FnT, *, in_axes) -> _FnT:
   """Like `jax.vmap` but cache the function."""
   return enp.lazy.jax.vmap(
       fn,
       in_axes=in_axes,
+  )
+
+
+@functools.lru_cache(maxsize=None)
+def _torch_vmap_cached(fn: _FnT, *, in_axes) -> _FnT:
+  """Like `jax.vmap` but cache the function."""
+  try:
+    import functorch  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
+  except ImportError as e:
+    epy.reraise(e, suffix='. vectorization with `pytorch` require functorch')
+
+  return functorch.vmap(
+      fn,
+      in_dims=in_axes,
   )
 
 

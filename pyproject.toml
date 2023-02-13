@@ -43,6 +43,7 @@ dev = [
     "chex",
     "jax[cpu]",
     "tf-nightly",
+    "torch",
 ]
 
 [tool.pyink]

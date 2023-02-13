@@ -20,12 +20,20 @@ Import should work even if the lazy deps are not present.
 
 from __future__ import annotations
 
+import dataclasses
 import sys
 
 import dataclass_array as dca
+from etils import enp
+import pytest
 
-del dca
+
+@dataclasses.dataclass(frozen=True)
+class A(dca.DataclassArray):
+  x: dca.typing.f32['*s']
 
 
 def test_lazy():
-  pass
+
+  x = A(x=[1.0, 2.0])
+  assert x.xnp is enp.lazy.np
