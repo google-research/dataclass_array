@@ -463,10 +463,8 @@ class DataclassArray(metaclass=MetaDataclassArray):
       return self
     # Direct `torch` <> `tf`/`jax` conversion not supported, so convert to
     # `numpy`
-    if (
-        enp.lazy.has_torch
-        and xnp is enp.lazy.torch
-        or self.xnp is enp.lazy.torch
+    if enp.lazy.has_torch and (
+        xnp is enp.lazy.torch or self.xnp is enp.lazy.torch
     ):
       array_fn = lambda f: xnp.asarray(np.asarray(f.value))
     else:
