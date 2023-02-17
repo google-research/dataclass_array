@@ -422,7 +422,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     }
 
     # Create the new object
-    new_self = dataclasses.replace(self, **init_kwargs)
+    new_self = dataclasses.replace(self, **init_kwargs)  # pytype: disable=wrong-arg-types  # re-none
 
     # TODO(epot): Could try to unify logic bellow with `tree_unflatten`
 
@@ -677,7 +677,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
         array_field_names=list(self._all_array_fields.keys()),
         non_array_field_kwargs={
             f.name: getattr(self, f.name)
-            for f in dataclasses.fields(self)
+            for f in dataclasses.fields(self)  # pytype: disable=wrong-arg-types  # re-none
             if f.name not in self._all_array_fields  # pylint: disable=unsupported-membership-test
         },
     )
@@ -698,7 +698,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     )
     init_fields = {}
     non_init_fields = {}
-    fields = {f.name: f for f in dataclasses.fields(cls)}
+    fields = {f.name: f for f in dataclasses.fields(cls)}  # pytype: disable=wrong-arg-types  # re-none
     for k, v in metadata.non_array_field_kwargs.items():
       if fields[k].init:
         init_fields[k] = v

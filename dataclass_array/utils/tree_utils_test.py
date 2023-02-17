@@ -66,7 +66,7 @@ def test_tree_map_multi_args():
 
   x0 = {'a': [1, 2]}
   x1 = {'a': [10, 20]}
-  assert tree_utils.tree_map(add_fn, x0, x1) == {'a': [11, 22]}
+  assert tree_utils.tree_map(add_fn, x0, x1) == {'a': [11, 22]}  # pytype: disable=wrong-arg-types  # re-none
 
 
 def test_tree_map_chex():
@@ -79,4 +79,4 @@ def test_tree_map_chex():
 
   x0 = {'a': A(x=1, y=2)}
   x1 = {'a': A(x=10, y=20)}
-  assert tree_utils.tree_map(add_fn, x0, x1) == {'a': A(x=11, y=22)}
+  assert tree_utils.tree_map(add_fn, x0, x1) == {'a': A(x=11, y=22)}  # pytype: disable=wrong-arg-types  # re-none
