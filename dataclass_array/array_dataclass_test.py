@@ -280,8 +280,8 @@ def test_point_infered_np(
     shape: Shape,
 ):
   if xnp is not None:  # Normalize np arrays to test the various backend
-    x = xnp.array(x)
-    y = xnp.array(y)
+    x = xnp.asarray(x)
+    y = xnp.asarray(y)
   else:
     xnp = np
 
@@ -565,7 +565,7 @@ def test_broadcast(xnp: enp.NpModule):
   p = Nested(
       # pt.shape broadcasted to (2, 3)
       pt=Point(
-          x=xnp.array(0),
+          x=xnp.asarray(0),
           y=xnp.zeros(broadcast_shape + (3,)),
       ),
       # iso.shape == (), broadcasted to (2, 3)
@@ -642,13 +642,13 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 
   with pytest.raises(ValueError, match='Cannot cast float16'):
     PointNoCast(
-        x=xnp.array([1, 2, 3], dtype=np.float16),
-        y=xnp.array([1, 2, 3], dtype=np.float16),
+        x=xnp.asarray([1, 2, 3], dtype=np.float16),
+        y=xnp.asarray([1, 2, 3], dtype=np.float16),
     )
 
   p = PointNoCast(
-      x=xnp.array([1, 2, 3], dtype=np.float16),
-      y=xnp.array([1, 2, 3], dtype=np.uint8),
+      x=xnp.asarray([1, 2, 3], dtype=np.float16),
+      y=xnp.asarray([1, 2, 3], dtype=np.uint8),
   )
   assert p.shape == (3,)
   assert enp.lazy.as_dtype(p.x.dtype) == np.float16
@@ -665,7 +665,7 @@ def test_dataclass_params_no_list(xnp: enp.NpModule):
 
   with pytest.raises(TypeError, match='Could not infer numpy module'):
     PointNoList(
-        x=xnp.array(1, dtype=np.float16),
+        x=xnp.asarray(1, dtype=np.float16),
         y=[1, 2, 3],
     )
 
@@ -679,8 +679,8 @@ def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
 
   with pytest.raises(ValueError, match='Cannot broadcast'):
     PointNoBroadcast(
-        x=xnp.array(1, dtype=np.float16),
-        y=xnp.array([1, 2, 3], dtype=np.int32),
+        x=xnp.asarray(1, dtype=np.float16),
+        y=xnp.asarray([1, 2, 3], dtype=np.int32),
     )
 
 

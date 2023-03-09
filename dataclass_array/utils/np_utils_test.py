@@ -29,10 +29,12 @@ enable_torch_tf_np_mode = enp.testing.enable_torch_tf_np_mode
 @enp.testing.parametrize_xnp()
 def test_get_xnp(xnp: enp.NpModule):
   # Dataclass array support
-  r = dca.testing.Ray(pos=xnp.array([3.0, 0, 0]), dir=xnp.array([3.0, 0, 0]))
+  r = dca.testing.Ray(
+      pos=xnp.asarray([3.0, 0, 0]), dir=xnp.asarray([3.0, 0, 0])
+  )
   assert np_utils.get_xnp(r) is xnp
   # Array support
-  assert np_utils.get_xnp(xnp.array([3.0, 0, 0])) is xnp
+  assert np_utils.get_xnp(xnp.asarray([3.0, 0, 0])) is xnp
 
   with pytest.raises(TypeError, match='Unexpected array type'):
     np_utils.get_xnp('abc')
