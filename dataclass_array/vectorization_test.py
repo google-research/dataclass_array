@@ -34,7 +34,7 @@ X0 = 4
 X1 = 5
 
 # Activate the fixture
-enable_torch_tf_np_mode = enp.testing.enable_torch_tf_np_mode
+enable_tf_np_mode = enp.testing.set_tnp
 
 
 @pytest.mark.parametrize(

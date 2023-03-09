@@ -37,9 +37,6 @@ from dataclass_array.array_dataclass import DataclassArray
 from dataclass_array.ops import stack
 from dataclass_array.vectorization import vectorize_method
 
-# TODO(epot): Remove once Torch has better numpy API
-from etils.enp import activate_torch_support
-
 # `dca.testing` do not depend on pytest or other heavy deps, so is safe to
 # import
 from dataclass_array import testing

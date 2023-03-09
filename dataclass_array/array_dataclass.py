@@ -541,17 +541,6 @@ class DataclassArray(metaclass=MetaDataclassArray):
       return None
     xnp = _infer_xnp(xnps)
 
-    if (
-        enp.lazy.has_torch
-        and xnp is enp.lazy.torch
-        and not hasattr(enp.lazy.torch, '__etils_np_mode__')
-    ):
-      raise ValueError(
-          'torch support currently require to call:\n'
-          'import dataclass_array as dca\n'
-          'dca.activate_torch_support()'
-      )
-
     def _cast_field(f: _ArrayField) -> None:
       try:
         new_value = np_utils.asarray(

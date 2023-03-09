@@ -25,7 +25,6 @@ import sys
 
 import dataclass_array as dca
 from etils import enp
-import pytest
 
 
 @dataclasses.dataclass(frozen=True)

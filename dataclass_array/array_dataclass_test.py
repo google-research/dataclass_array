@@ -28,7 +28,7 @@ import pytest
 import tensorflow as tf
 
 # Activate the fixture
-enable_torch_tf_np_mode = enp.testing.enable_torch_tf_np_mode
+enable_tf_np_mode = enp.testing.set_tnp
 
 # TODO(epot): Test dtype `complex`, `str`
 
