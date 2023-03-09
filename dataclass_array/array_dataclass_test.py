@@ -72,8 +72,8 @@ class Point(dca.DataclassArray):
     assert p.y.shape == shape
     assert enp.lazy.as_dtype(p.x.dtype) == np.float32
     assert enp.lazy.as_dtype(p.y.dtype) == np.float32
-    assert isinstance(p.x, xnp.ndarray)
-    assert isinstance(p.y, xnp.ndarray)
+    assert enp.compat.is_array_xnp(p.x, xnp)
+    assert enp.compat.is_array_xnp(p.y, xnp)
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
@@ -100,8 +100,8 @@ class Isometrie(dca.DataclassArray):
     assert p.t.shape == shape + (2,)
     assert enp.lazy.as_dtype(p.r.dtype) == np.float32
     assert enp.lazy.as_dtype(p.t.dtype) == np.int32
-    assert isinstance(p.r, xnp.ndarray)
-    assert isinstance(p.t, xnp.ndarray)
+    assert enp.compat.is_array_xnp(p.r, xnp)
+    assert enp.compat.is_array_xnp(p.t, xnp)
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
@@ -228,8 +228,8 @@ class WithStatic(dca.DataclassArray):
     assert p.y.shape == shape + (2, 2)
     assert enp.lazy.as_dtype(p.x.dtype) == np.float32
     assert enp.lazy.as_dtype(p.y.dtype) == np.float32
-    assert isinstance(p.x, xnp.ndarray)
-    assert isinstance(p.y, xnp.ndarray)
+    assert enp.compat.is_array_xnp(p.x, xnp)
+    assert enp.compat.is_array_xnp(p.y, xnp)
     # Static field is correctly forwarded
     assert isinstance(p.static, str)
     assert p.static == 'abc'
@@ -586,7 +586,7 @@ def test_broadcast(xnp: enp.NpModule):
 def test_infer_np(xnp: enp.NpModule):
   p = Point(x=xnp.ones((3,)), y=[0, 0, 0])  # y is casted to xnp
   assert p.xnp is xnp
-  assert isinstance(p.y, xnp.ndarray)
+  assert enp.compat.is_array_xnp(p.y, xnp)
 
 
 @parametrize_dataclass_arrays

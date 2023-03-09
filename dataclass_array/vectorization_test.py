@@ -70,7 +70,7 @@ def test_broadcast_args(
   def fn(self, arg_dc, arg_array):
     assert isinstance(self, dca.testing.Ray)
     assert isinstance(arg_dc, dca.testing.Ray)
-    assert isinstance(arg_array, xnp.ndarray)
+    assert enp.compat.is_array_xnp(arg_array, xnp)
     assert self.shape == ()  # pylint: disable=g-explicit-bool-comparison
     assert arg_dc.shape == expected_arg_shape[1:]
     assert arg_array.shape == expected_arg_shape[1:] + (3,)

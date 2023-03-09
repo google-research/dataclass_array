@@ -294,7 +294,7 @@ def _broacast_and_flatten_to(
   final_shape = batch_shape + inner_shape
   if isinstance(array, array_dataclass.DataclassArray):
     array = array.broadcast_to(final_shape)
-  elif isinstance(array, xnp.ndarray):
+  elif enp.compat.is_array_xnp(array, xnp):
     array = xnp.broadcast_to(array, final_shape)
   else:
     raise TypeError(f'Unexpected array type: {type(array)}')
