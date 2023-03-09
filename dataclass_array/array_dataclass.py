@@ -37,6 +37,9 @@ import numpy as np
 import typing_extensions
 from typing_extensions import Annotated, Literal, TypeAlias  # pylint: disable=g-multiple-import
 
+if typing.TYPE_CHECKING:
+  import torch  # pytype: disable=import-error
+
 lazy = enp.lazy
 
 # TODO(pytype): Should use `dca.typing.DcT` but bound does not work across
@@ -477,8 +480,6 @@ class DataclassArray(metaclass=MetaDataclassArray):
     )
     return new_self
 
-  # ====== Internal ======
-
   # TODO(pytype): Remove hack. Currently, Python does not support typing
   # annotations for modules, by pytype auto-infer the correct type.
   # So this hack allow auto-completion
@@ -496,6 +497,33 @@ class DataclassArray(metaclass=MetaDataclassArray):
     def xnp(self) -> enp.NpModule:
       """Returns the numpy module of the class (np, jnp, tnp)."""
       return self._xnp
+
+  # ====== Torch specific methods ======
+  # Could also add
+  # * x.detach
+  # * x.is_cuda
+  # * x.device
+  # * x.get_device
+
+  def to(self: _DcT, device, **kwargs) -> _DcT:
+    """Move the dataclass array to the device."""
+    if not lazy.is_torch_xnp(self.xnp):
+      raise ValueError('`.to` can only be called when `xnp == torch`')
+    return self.map_field(lambda f: f.to(device, **kwargs))
+
+  def cpu(self: _DcT, *args, **kwargs) -> _DcT:
+    """Move the dataclass array to the CPU device."""
+    if not lazy.is_torch_xnp(self.xnp):
+      raise ValueError('`.cpu` can only be called when `xnp == torch`')
+    return self.map_field(lambda f: f.cpu(*args, **kwargs))
+
+  def cuda(self: _DcT, *args, **kwargs) -> _DcT:
+    """Move the dataclass array to the CUDA device."""
+    if not lazy.is_torch_xnp(self.xnp):
+      raise ValueError('`.cuda` can only be called when `xnp == torch`')
+    return self.map_field(lambda f: f.cuda(*args, **kwargs))
+
+  # ====== Internal ======
 
   @epy.cached_property
   def _all_array_fields(self) -> dict[str, _ArrayField]:

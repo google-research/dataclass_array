@@ -597,10 +597,17 @@ def test_infer_np(xnp: enp.NpModule):
         enp.lazy.torch.utils._pytree.tree_map,
     ],
 )
-def test_torch_tree_map(tree_map, dca_cls: DcaTest):
+def test_tree_map(tree_map, dca_cls: DcaTest):
   p = dca_cls.make(shape=(3,), xnp=np)
   p = tree_map(lambda x: x[None, ...], p)
   dca_cls.assert_val(p, (1, 3), xnp=np)
+
+
+def test_torch_device():
+  p = Nested.make(shape=(2,), xnp=enp.lazy.torch)
+  p = p.cpu()
+  p = p.to('cpu')
+  Nested.assert_val(p, (2,), xnp=enp.lazy.torch)
 
 
 @enp.testing.parametrize_xnp(

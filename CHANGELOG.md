@@ -24,6 +24,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 ## [Unreleased]
 
 *   **Add `torch` support!**
+*   Add `.cpu()`, `.cuda()`, `.to()` methods to move the dataclass from
+    devices when using torch.
 
 ## [1.3.0] - 2023-01-16
 
