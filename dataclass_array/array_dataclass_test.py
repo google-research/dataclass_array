@@ -365,7 +365,7 @@ def test_complex_shape(
       xnp=xnp,
   )
   dca_cls.assert_val(
-      p.flatten()[xnp.ones(p.size, dtype=np.bool_)],
+      p.flatten()[xnp.ones(p.size, dtype=enp.lazy.as_dtype(np.bool_, xnp=xnp))],
       (p.size,),
       xnp=xnp,
   )
@@ -642,13 +642,13 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 
   with pytest.raises(ValueError, match='Cannot cast float16'):
     PointNoCast(
-        x=xnp.asarray([1, 2, 3], dtype=np.float16),
-        y=xnp.asarray([1, 2, 3], dtype=np.float16),
+        x=xnp.asarray([1, 2, 3], dtype=xnp.float16),
+        y=xnp.asarray([1, 2, 3], dtype=xnp.float16),
     )
 
   p = PointNoCast(
-      x=xnp.asarray([1, 2, 3], dtype=np.float16),
-      y=xnp.asarray([1, 2, 3], dtype=np.uint8),
+      x=xnp.asarray([1, 2, 3], dtype=xnp.float16),
+      y=xnp.asarray([1, 2, 3], dtype=xnp.uint8),
   )
   assert p.shape == (3,)
   assert enp.lazy.as_dtype(p.x.dtype) == np.float16
@@ -665,7 +665,7 @@ def test_dataclass_params_no_list(xnp: enp.NpModule):
 
   with pytest.raises(TypeError, match='Could not infer numpy module'):
     PointNoList(
-        x=xnp.asarray(1, dtype=np.float16),
+        x=xnp.asarray(1, dtype=xnp.float16),
         y=[1, 2, 3],
     )
 
@@ -679,8 +679,8 @@ def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
 
   with pytest.raises(ValueError, match='Cannot broadcast'):
     PointNoBroadcast(
-        x=xnp.asarray(1, dtype=np.float16),
-        y=xnp.asarray([1, 2, 3], dtype=np.int32),
+        x=xnp.asarray(1, dtype=xnp.float16),
+        y=xnp.asarray([1, 2, 3], dtype=xnp.int32),
     )
 
 
@@ -693,16 +693,16 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
     y: IntArray['... 3 _']
 
   p = PointDynamicShape(
-      x=xnp.zeros(batch_shape + (2, 3), dtype=np.float32),
-      y=xnp.zeros(batch_shape + (3, 1), dtype=np.int32),
+      x=xnp.zeros(batch_shape + (2, 3), dtype=xnp.float32),
+      y=xnp.zeros(batch_shape + (3, 1), dtype=xnp.int32),
   )
   assert p.shape == batch_shape
   assert p.x.shape == batch_shape + (2, 3)
   assert p.y.shape == batch_shape + (3, 1)
 
   p2 = PointDynamicShape(
-      x=xnp.zeros(batch_shape + (3, 2), dtype=np.float32),
-      y=xnp.zeros(batch_shape + (3, 1), dtype=np.int32),
+      x=xnp.zeros(batch_shape + (3, 2), dtype=xnp.float32),
+      y=xnp.zeros(batch_shape + (3, 1), dtype=xnp.int32),
   )
   assert p2.shape == batch_shape
   assert p2.x.shape == batch_shape + (3, 2)
@@ -727,8 +727,8 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
     err_msg = 'Shape do not match.'
   with pytest.raises(ValueError, match=err_msg):
     PointDynamicShape(
-        x=xnp.zeros(batch_shape + (3,), dtype=np.float32),  # len() != 2
-        y=xnp.zeros(batch_shape + (3, 1), dtype=np.int32),
+        x=xnp.zeros(batch_shape + (3,), dtype=xnp.float32),  # len() != 2
+        y=xnp.zeros(batch_shape + (3, 1), dtype=xnp.int32),
     )
 
   with pytest.raises(
@@ -736,8 +736,8 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
       match='Shape do not match.',
   ):
     PointDynamicShape(
-        x=xnp.zeros(batch_shape + (2, 3), dtype=np.float32),
-        y=xnp.zeros(batch_shape + (2, 1), dtype=np.int32),  # < 2 != 3
+        x=xnp.zeros(batch_shape + (2, 3), dtype=xnp.float32),
+        y=xnp.zeros(batch_shape + (2, 1), dtype=xnp.int32),  # < 2 != 3
     )
 
 
