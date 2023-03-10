@@ -20,14 +20,12 @@ Import should work even if the lazy deps are not present.
 
 from __future__ import annotations
 
-import dataclasses
 import sys
 
 import dataclass_array as dca
 from etils import enp
 
 
-@dataclasses.dataclass(frozen=True)
 class A(dca.DataclassArray):
   x: dca.typing.f32['*s']
 
