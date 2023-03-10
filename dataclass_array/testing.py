@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 import functools
 from typing import Any, Optional
 
@@ -27,7 +26,6 @@ from etils.etree import Tree
 import numpy as np
 
 
-@dataclasses.dataclass(frozen=True)
 class Ray(array_dataclass.DataclassArray):
   """Dummy dataclass array for testing."""
 

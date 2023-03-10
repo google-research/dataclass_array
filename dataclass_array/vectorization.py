@@ -100,7 +100,6 @@ def vectorize_method(
   Example:
 
   ```
-  @dataclasses.dataclass(frozen=True)
   class Point3d(dca.DataclassArray):
     p: f32['*shape 3']
 
