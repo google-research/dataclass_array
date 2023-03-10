@@ -30,7 +30,6 @@ import dataclass_array as dca
 from dataclass_array.typing import FloatArray
 
 
-@dataclasses.dataclass(frozen=True)
 class Ray(dca.DataclassArray):
   pos: FloatArray['*batch_shape 3']
   dir: FloatArray['*batch_shape 3']
@@ -75,7 +74,6 @@ A `DataclassArray` has 2 types of fields:
     Static fields are also ignored in `jax.tree_map`.
 
 ```python
-@dataclasses.dataclass(frozen=True)
 class MyArray(dca.DataclassArray):
   # Array fields
   a: FloatArray['*batch_shape 3']  # Defined by `etils.array_types`
@@ -102,7 +100,6 @@ batching:
 2.  Decorate the method with `dca.vectorize_method`
 
 ```python
-@dataclasses.dataclass(frozen=True)
 class Camera(dca.DataclassArray):
   K: FloatArray['*batch_shape 4 4']
   resolution = tuple[int, int]
@@ -133,7 +130,7 @@ rays.shape == (num_cams, h, w)
 *   Instead of vectorizing a single axis, `@dca.vectorize_method` will vectorize
     over `*self.shape` (not just `self.shape[0]`). This is like if `vmap` was
     applied to `self.flatten()`
-*   When multiple arguments, axis with dimension `1` are brodcasted.
+*   When multiple arguments, axis with dimension `1` are broadcasted.
 
 For example, with `__matmul__(self, x: T) -> T`:
 
