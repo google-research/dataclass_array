@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Any
 
 import dataclass_array as dca
@@ -49,7 +48,6 @@ class DcaTest:
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-@dataclasses.dataclass(frozen=True)
 class Point(dca.DataclassArray):
   x: f32['*shape']
   y: f32['*shape']
@@ -77,7 +75,6 @@ class Point(dca.DataclassArray):
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-@dataclasses.dataclass(frozen=True)
 class Isometrie(dca.DataclassArray):
   r: f32['... 3 3']
   t: i32[..., 2]
@@ -105,7 +102,6 @@ class Isometrie(dca.DataclassArray):
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-@dataclasses.dataclass(frozen=True)
 class Nested(dca.DataclassArray):
   # pytype: disable=annotation-type-mismatch
   iso: Isometrie
@@ -142,7 +138,6 @@ class Nested(dca.DataclassArray):
     Isometrie.assert_val(p.iso_batched, shape=shape + (3, 7), xnp=xnp)
 
 
-@dataclasses.dataclass(frozen=True)
 class OnlyStatic(dca.DataclassArray):
   """Dataclass with no array fields."""
 
@@ -172,7 +167,6 @@ class OnlyStatic(dca.DataclassArray):
     assert p.y == 1
 
 
-@dataclasses.dataclass(frozen=True)
 class NestedOnlyStatic(dca.DataclassArray):
   """Dataclass with only nested array fields."""
 
@@ -198,7 +192,6 @@ class NestedOnlyStatic(dca.DataclassArray):
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-@dataclasses.dataclass(frozen=True)
 class WithStatic(dca.DataclassArray):
   """Mix of static and array fields."""
 
@@ -413,7 +406,6 @@ def test_wrong_input_type():
     )
 
   @dca.dataclass_array(broadcast=True, cast_dtype=True)
-  @dataclasses.dataclass(frozen=True)
   class PointWrapper(dca.DataclassArray):
     pts: Point
     rgb: f32['*shape 3']
@@ -642,7 +634,6 @@ def test_vmap(xnp: enp.NpModule):
 
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_cast(xnp: enp.NpModule):
-  @dataclasses.dataclass(frozen=True)
   class PointNoCast(dca.DataclassArray):
     x: FloatArray['*shape']
     y: IntArray['*shape']
@@ -665,7 +656,6 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_list(xnp: enp.NpModule):
   @dca.dataclass_array(cast_list=False)
-  @dataclasses.dataclass(frozen=True)
   class PointNoList(dca.DataclassArray):
     x: FloatArray['*shape']
     y: IntArray['*shape']
@@ -679,7 +669,6 @@ def test_dataclass_params_no_list(xnp: enp.NpModule):
 
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
-  @dataclasses.dataclass(frozen=True)
   class PointNoBroadcast(dca.DataclassArray):
     x: FloatArray['*shape']
     y: IntArray['*shape']
@@ -694,7 +683,6 @@ def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 @pytest.mark.parametrize('batch_shape', [(), (1, 3)])
 def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
-  @dataclasses.dataclass(frozen=True)
   class PointDynamicShape(dca.DataclassArray):
     x: FloatArray[..., None, None]
     y: IntArray['... 3 _']
