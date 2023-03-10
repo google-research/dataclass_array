@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Optional, List, Union
 
 import dataclass_array as dca
@@ -28,7 +27,6 @@ _DS = dca.field_utils.DataclassWithShape
 Ray = dca.testing.Ray
 
 
-@dataclasses.dataclass(frozen=True)
 class Camera(dca.DataclassArray):
   pos: FloatArray[..., 3]
   dir: FloatArray[..., 3]
