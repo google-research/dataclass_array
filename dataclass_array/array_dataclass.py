@@ -86,7 +86,6 @@ def dataclass_array(
 
   ```python
   @dca.dataclass_array()
-  @dataclasses.dataclass(frozen=True)
   class MyDataclass(dca.DataclassArray):
     ...
   ```
@@ -119,6 +118,31 @@ def dataclass_array(
   return decorator
 
 
+def array_field(
+    shape: Shape,
+    dtype: DTypeArg = float,
+    **field_kwargs,
+) -> dataclasses.Field[DcOrArray]:
+  """Dataclass array field.
+
+  See `dca.DataclassArray` for example.
+
+  Args:
+    shape: Inner shape of the field
+    dtype: Type of the field
+    **field_kwargs: Args forwarded to `dataclasses.field`
+
+  Returns:
+    The dataclass field.
+  """
+  # TODO(epot): Validate shape, dtype
+  dca_field = _ArrayFieldMetadata(
+      inner_shape_non_static=shape,
+      dtype=dtype,
+  )
+  return dataclasses.field(**field_kwargs, metadata={_METADATA_KEY: dca_field})
+
+
 class MetaDataclassArray(type):
   """DataclassArray metaclass."""
 
@@ -128,13 +152,21 @@ class MetaDataclassArray(type):
     return Annotated[cls, field_utils.ShapeAnnotation(spec)]
 
 
+@typing_extensions.dataclass_transform(  # pytype: disable=not-supported-yet
+    kw_only_default=True,
+    # TODO(b/272524683):Restore field specifier
+    # field_specifiers=(
+    #     dataclasses.Field,
+    #     dataclasses.field,
+    #     array_field,
+    # ),
+)
 class DataclassArray(metaclass=MetaDataclassArray):
   """Dataclass which behaves like an array.
 
   Usage:
 
   ```python
-  @dataclasses.dataclass
   class Square(DataclassArray):
     pos: f32['*shape 2']
     scale: f32['*shape']
@@ -179,7 +211,6 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   Field which do not satisfy any of the above conditions are static (including
   field annotated with `field: np.ndarray` or similar).
-
   """
 
   # Child class inherit the default params by default, but can also
@@ -194,8 +225,21 @@ class DataclassArray(metaclass=MetaDataclassArray):
   _shape: Shape
   _xnp: enp.NpModule
 
-  def __init_subclass__(cls, **kwargs):
+  def __init_subclass__(
+      cls,
+      frozen=True,
+      **kwargs,
+  ):
     super().__init_subclass__(**kwargs)
+
+    if not frozen:
+      raise ValueError(f'{cls} cannot be `frozen=False`.')
+
+    # Apply dataclass (in-place)
+    if not typing.TYPE_CHECKING:
+      # TODO(b/227290126): Create pytype issues
+      dataclasses.dataclass(frozen=True)(cls)
+
     # TODO(epot): Could have smart __repr__ which display types if array have
     # too many values (maybe directly in `edc.field(repr=...)`).
     edc.dataclass(kw_only=True, repr=True, auto_cast=False)(cls)
@@ -211,6 +255,11 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # TODO(epot): Support inheritance if the parents also define
     # `__dca_non_init_fields__` (fields should be merged from `.mro()`)
     cls.__dca_non_init_fields__ = set(cls.__dca_non_init_fields__)
+
+  if typing.TYPE_CHECKING:
+    # TODO(b/242839979): pytype do not support PEP 681 -- Data Class Transforms
+    def __init__(self, **kwargs):
+      pass
 
   def __post_init__(self) -> None:
     """Validate and normalize inputs."""
@@ -755,7 +804,6 @@ def _init_cls(self: DataclassArray) -> None:
 
   This will:
 
-  * Validate the `@dataclass(frozen=True)` is correctly applied
   * Extract the types annotations, detect which fields are arrays or static,
     and store the result in `_dca_fields_metadata`
   * For static `DataclassArray` (class with only static fields), it will
@@ -766,12 +814,6 @@ def _init_cls(self: DataclassArray) -> None:
     self: The dataclass to initialize
   """
   cls = type(self)
-
-  # Make sure the dataclass was registered and frozen
-  if not dataclasses.is_dataclass(cls) or not cls.__dataclass_params__.frozen:  # pytype: disable=attribute-error
-    raise ValueError(
-        '`dca.DataclassArray` need to be @dataclasses.dataclass(frozen=True)'
-    )
 
   # The first time, compute typing annotations & metadata
   # At this point, `ForwardRef` should have been resolved.
@@ -797,7 +839,7 @@ def _init_cls(self: DataclassArray) -> None:
     )
 
   dca_fields_metadata = {
-      f.name: _make_field_metadata(f, hints) for f in dataclasses.fields(cls)
+      f.name: _make_field_metadata(f, hints) for f in dataclasses.fields(cls)  # pytype: disable=wrong-arg-types
   }
   dca_fields_metadata = {  # Filter `None` values (static fields)
       k: v for k, v in dca_fields_metadata.items() if v is not None
@@ -907,31 +949,6 @@ class _TreeMetadata:
 
   array_field_names: list[str]
   non_array_field_kwargs: dict[str, Any]
-
-
-def array_field(
-    shape: Shape,
-    dtype: DTypeArg = float,
-    **field_kwargs,
-) -> dataclasses.Field[DcOrArray]:
-  """Dataclass array field.
-
-  See `dca.DataclassArray` for example.
-
-  Args:
-    shape: Inner shape of the field
-    dtype: Type of the field
-    **field_kwargs: Args forwarded to `dataclasses.field`
-
-  Returns:
-    The dataclass field.
-  """
-  # TODO(epot): Validate shape, dtype
-  dca_field = _ArrayFieldMetadata(
-      inner_shape_non_static=shape,
-      dtype=dtype,
-  )
-  return dataclasses.field(**field_kwargs, metadata={_METADATA_KEY: dca_field})
 
 
 # TODO(epot): Should refactor `_ArrayField` in `_DataclassArrayField` and

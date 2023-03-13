@@ -150,7 +150,6 @@ def test_broadcast_args_failure(
 def test_replace_dca(xnp: enp.NpModule):
   # Ensure that the non-init static fields are correctly forwarded.
 
-  @dataclasses.dataclass(frozen=True)
   class DataclassWithNonInit(dca.DataclassArray):
     """Dataclass with a non-init (static) field."""
 
