@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+## [1.4.0] - 2023-03-13
+
 *   **Add `torch` support!**
 *   Add `.cpu()`, `.cuda()`, `.to()` methods to move the dataclass from
     devices when using torch.
@@ -59,7 +61,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 *   Initial release
 
-[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/google-research/dataclass_array/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/google-research/dataclass_array/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/google-research/dataclass_array/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/google-research/dataclass_array/compare/v1.1.0...v1.2.0
