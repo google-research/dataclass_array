@@ -26,7 +26,6 @@ from dataclass_array.utils import np_utils
 from etils import enp
 import jax
 import pytest
-import tensorflow.experimental.numpy as tnp
 
 H = 2
 W = 3
@@ -177,16 +176,15 @@ def test_replace_dca(xnp: enp.NpModule):
   assert a.shape == (3,)
   assert a.x == 5
 
-  # Vectorization supported
-  if xnp not in [
-      tnp,
-  ]:
-    a = a.fn()
-  assert a.xnp is xnp
+  # Tree-map supported
+  a = jax.tree_util.tree_map(lambda x: x, a)
   assert a.shape == (3,)
   assert a.x == 5
 
-  # Tree-map supported
-  a = jax.tree_util.tree_map(lambda x: x, a)
+  # Vectorization supported
+  dca.testing.skip_vmap_unavailable(xnp)
+
+  a = a.fn()
+  assert a.xnp is xnp
   assert a.shape == (3,)
   assert a.x == 5

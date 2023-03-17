@@ -609,11 +609,9 @@ def test_torch_device():
     ]
 )
 def test_vmap(xnp: enp.NpModule):
-  import functorch
-
   vmap_fn = {
       enp.lazy.jnp: enp.lazy.jax.vmap,
-      enp.lazy.torch: functorch.vmap,
+      enp.lazy.torch: enp.lazy.torch.func.vmap,
   }[xnp]
 
   batch_shape = 3

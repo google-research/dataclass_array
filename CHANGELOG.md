@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Add `torch==2.0.0` support
+
 ## [1.4.0] - 2023-03-13
 
 *   **Add `torch` support!**

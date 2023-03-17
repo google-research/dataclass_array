@@ -515,10 +515,18 @@ class DataclassArray(metaclass=MetaDataclassArray):
       return self
     # Direct `torch` <> `tf`/`jax` conversion not supported, so convert to
     # `numpy`
-    if enp.lazy.has_torch and (
-        xnp is enp.lazy.torch or self.xnp is enp.lazy.torch
-    ):
-      array_fn = lambda f: xnp.asarray(np.asarray(f.value))
+    if enp.lazy.is_torch_xnp(xnp) or enp.lazy.is_torch_xnp(self.xnp):
+
+      def _as_torch(f):
+        arr = np.asarray(f.value)
+        # Torch fail for scalar arrays:
+        # https://github.com/pytorch/pytorch/issues/97021
+        if enp.lazy.is_torch_xnp(xnp) and not arr.shape:  # Destination is torch
+          return xnp.asarray(arr.item(), dtype=lazy.as_torch_dtype(arr.dtype))
+
+        return xnp.asarray(arr)
+
+      array_fn = _as_torch
     else:
       array_fn = lambda f: xnp.asarray(f.value)
 

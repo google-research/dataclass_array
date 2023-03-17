@@ -21,6 +21,7 @@ from typing import Any, Optional
 
 from dataclass_array import array_dataclass
 from dataclass_array.typing import FloatArray  # pylint: disable=g-multiple-import
+from etils import enp
 from etils.etree import jax as etree
 from etils.etree import Tree
 import numpy as np
@@ -61,6 +62,9 @@ def assert_allclose(
 def assert_array_equal(
     x,
     y,
+    *,
+    atol: Optional[float] = None,
+    rtol: Optional[float] = None,
 ) -> None:
   """Assert the 2 objects are equals.
 
@@ -71,9 +75,26 @@ def assert_array_equal(
   Args:
     x: First element to compare
     y: Second element to compare
+    atol: Absolute tolerance
+    rtol: Relative tolerance
   """
   assert type(x) == type(y)  # pylint: disable=unidiomatic-typecheck
   assert x.shape == y.shape
-  assert_allclose(x, y)
+  assert_allclose(x, y, atol=atol, rtol=rtol)
   if isinstance(x, array_dataclass.DataclassArray):
     assert x.xnp is y.xnp
+
+
+def skip_vmap_unavailable(xnp: enp.NpModule, *, skip_torch: str = '') -> None:
+  """Skip the test when vmap not available."""
+  skip = False
+  if enp.lazy.is_tf_xnp(xnp):
+    # TODO(b/152678472): TF do not support vmap & tf.nest
+    skip = True
+  elif enp.lazy.is_torch_xnp(xnp):
+    if skip_torch:
+      skip = True
+  if skip:
+    import pytest  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
+
+    pytest.skip('Vectorization not supported yet with TF / Torch')

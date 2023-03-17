@@ -377,12 +377,18 @@ def _jax_vmap_cached(fn: _FnT, *, in_axes) -> _FnT:
 @functools.lru_cache(maxsize=None)
 def _torch_vmap_cached(fn: _FnT, *, in_axes) -> _FnT:
   """Like `jax.vmap` but cache the function."""
-  try:
-    import functorch  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
-  except ImportError as e:
-    epy.reraise(e, suffix='. vectorization with `pytorch` require functorch')
+  if hasattr(enp.lazy.torch, 'func'):  # torch 2.0
+    vmap = enp.lazy.torch.func.vmap
+  else:
+    try:
+      import functorch  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
+    except ImportError as e:
+      epy.reraise(
+          e, suffix='. vectorization with `pytorch<2` require functorch'
+      )
+    vmap = functorch.vmap
 
-  return functorch.vmap(
+  return vmap(
       fn,
       in_dims=in_axes,
   )
