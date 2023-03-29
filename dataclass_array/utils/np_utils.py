@@ -171,7 +171,7 @@ def to_absolute_axis(axis: Axes, *, ndim: int) -> Axes:
   elif isinstance(axis, tuple):
     if not all(isinstance(dim, int) for dim in axis):
       raise ValueError(f'Invalid axis={axis}')
-    return tuple(to_absolute_axis(dim, ndim=ndim) for dim in axis)
+    return tuple(to_absolute_axis(dim, ndim=ndim) for dim in axis)  # pytype: disable=bad-return-type  # always-use-return-annotations
   else:
     raise TypeError(f'Unexpected axis type: {type(axis)} {axis}')
 
