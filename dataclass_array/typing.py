@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ DynamicShape = Tuple[Optional[int], ...]
 # .mean(axis=...)
 Axes = Union[None, Shape, int]
 
-DTypeArg = Type[
+DTypeArg = Type[  # pytype: disable=invalid-annotation
     Union[
         int,
         float,
@@ -73,5 +73,5 @@ DTypeArg = Type[
 DcT = TypeVar('DcT', bound='array_dataclass.DataclassArray')
 
 # Typing representing `xnp.ndarray` or `dca.DataclassArray`
-DcOrArray = Union[FloatArray[...], 'array_dataclass.DataclassArray']
+DcOrArray = Union[FloatArray[...], 'array_dataclass.DataclassArray']  # pytype: disable=invalid-annotation
 DcOrArrayT = TypeVar('DcOrArrayT')

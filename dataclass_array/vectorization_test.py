@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ def test_broadcast_args_failure(
 def test_replace_dca(xnp: enp.NpModule):
   # Ensure that the non-init static fields are correctly forwarded.
 
-  class DataclassWithNonInit(dca.DataclassArray):
+  class DataclassWithNonInit(dca.DataclassArray):  # pytype: disable=base-class-error
     """Dataclass with a non-init (static) field."""
 
     __dca_non_init_fields__ = ('x',)
@@ -163,7 +163,7 @@ def test_replace_dca(xnp: enp.NpModule):
       assert self.x == 5
       return self
 
-  a = DataclassWithNonInit(y=[1, 0, 0]).as_xnp(xnp)
+  a = DataclassWithNonInit(y=[1, 0, 0]).as_xnp(xnp)  # pytype: disable=attribute-error
   assert a.shape == (3,)
   assert a.x == 1
 

@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ lazy = enp.lazy
 
 # TODO(pytype): Should use `dca.typing.DcT` but bound does not work across
 # modules.
-_DcT = TypeVar('_DcT', bound='DataclassArray')
+_DcT = TypeVar('_DcT', bound='DataclassArray')  # pytype: disable=invalid-annotation
 
 # Any valid numpy indices slice ([x], [x:y], [:,...], ...)
 _IndiceItem = Union[type(Ellipsis), None, int, slice, Any]
@@ -797,7 +797,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     """Like setattr, but support `frozen` dataclasses."""
     object.__setattr__(self, name, value)
 
-  def assert_same_xnp(self, x: Union[Array[...], DataclassArray]) -> None:
+  def assert_same_xnp(self, x: Union[Array[...], DataclassArray]) -> None:  # pytype: disable=invalid-annotation
     """Assert the given array is of the same type as the current object."""
     xnp = np_utils.get_xnp(x)
     if xnp is not self.xnp:
@@ -807,7 +807,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
       )
 
 
-def _init_cls(self: DataclassArray) -> None:
+def _init_cls(self: DataclassArray) -> None:  # pytype: disable=invalid-annotation
   """Setup the class the first time the instance is called.
 
   This will:
@@ -977,7 +977,7 @@ class _ArrayFieldMetadata:
   """
 
   inner_shape_non_static: DynamicShape
-  dtype: Union[array_types.dtypes.DType, Type[DataclassArray]]
+  dtype: Union[array_types.dtypes.DType, Type[DataclassArray]]  # pytype: disable=invalid-annotation
 
   def __post_init__(self):
     """Normalizing/validating the shape/dtype."""
@@ -1010,7 +1010,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
   """
 
   name: str
-  host: DataclassArray = dataclasses.field(repr=False)
+  host: DataclassArray = dataclasses.field(repr=False)  # pytype: disable=invalid-annotation
 
   @property
   def qualname(self) -> str:

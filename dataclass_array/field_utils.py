@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class ShapeAnnotation:
 class DataclassWithShape:
   """Structure which represent `Ray['h w']`."""
 
-  cls: type[array_dataclass.DataclassArray]
+  cls: type[array_dataclass.DataclassArray]  # pytype: disable=invalid-annotation
   shape: str
 
   @classmethod

@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,12 +35,12 @@ enable_tf_np_mode = enp.testing.set_tnp
 class DcaTest:
 
   @staticmethod
-  def make(shape: Shape, xnp: enp.NpModule) -> dca.DataclassArray:
+  def make(shape: Shape, xnp: enp.NpModule) -> dca.DataclassArray:  # pytype: disable=invalid-annotation
     """Construct the dataclass array with the given shape."""
     raise NotImplementedError
 
   @staticmethod
-  def assert_val(
+  def assert_val(  # pytype: disable=invalid-annotation
       p: dca.DataclassArray, shape: Shape, xnp: enp.NpModule = None
   ) -> None:
     """Test that the value has expected shape/xnp."""
@@ -48,7 +48,7 @@ class DcaTest:
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-class Point(dca.DataclassArray):
+class Point(dca.DataclassArray):  # pytype: disable=base-class-error
   x: f32['*shape']
   y: f32['*shape']
 
@@ -75,7 +75,7 @@ class Point(dca.DataclassArray):
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-class Isometrie(dca.DataclassArray):
+class Isometrie(dca.DataclassArray):  # pytype: disable=base-class-error
   r: f32['... 3 3']
   t: i32[..., 2]
 
@@ -102,10 +102,10 @@ class Isometrie(dca.DataclassArray):
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-class Nested(dca.DataclassArray):
+class Nested(dca.DataclassArray):  # pytype: disable=base-class-error
   # pytype: disable=annotation-type-mismatch
   iso: Isometrie
-  iso_batched: Isometrie['*batch_shape 3 7']
+  iso_batched: Isometrie['*batch_shape 3 7']  # pytype: disable=not-indexable
   pt: Point = dca.field(shape=(3,), dtype=Point)
   # pytype: enable=annotation-type-mismatch
 
@@ -138,7 +138,7 @@ class Nested(dca.DataclassArray):
     Isometrie.assert_val(p.iso_batched, shape=shape + (3, 7), xnp=xnp)
 
 
-class OnlyStatic(dca.DataclassArray):
+class OnlyStatic(dca.DataclassArray):  # pytype: disable=base-class-error
   """Dataclass with no array fields."""
 
   x: int
@@ -152,10 +152,10 @@ class OnlyStatic(dca.DataclassArray):
         x=0,
         y=1,
     )
-    assert val.shape == ()  # pylint: disable=g-explicit-bool-comparison
-    assert val.xnp == np
+    assert val.shape == ()  # pylint: disable=g-explicit-bool-comparison  # pytype: disable=attribute-error
+    assert val.xnp == np  # pytype: disable=attribute-error
 
-    return val.broadcast_to(shape).as_xnp(xnp)
+    return val.broadcast_to(shape).as_xnp(xnp)  # pytype: disable=attribute-error
 
   @staticmethod
   def assert_val(p: OnlyStatic, shape: Shape, xnp: enp.NpModule = None):
@@ -167,7 +167,7 @@ class OnlyStatic(dca.DataclassArray):
     assert p.y == 1
 
 
-class NestedOnlyStatic(dca.DataclassArray):
+class NestedOnlyStatic(dca.DataclassArray):  # pytype: disable=base-class-error
   """Dataclass with only nested array fields."""
 
   s0: OnlyStatic
@@ -177,8 +177,8 @@ class NestedOnlyStatic(dca.DataclassArray):
   def make(shape: Shape, xnp: enp.NpModule) -> NestedOnlyStatic:
     """Construct the dataclass array with the given shape."""
     return NestedOnlyStatic(
-        s0=OnlyStatic(x=0, y=1).as_xnp(xnp).broadcast_to(shape),
-        s1=OnlyStatic(x=0, y=1).broadcast_to(shape),
+        s0=OnlyStatic(x=0, y=1).as_xnp(xnp).broadcast_to(shape),  # pytype: disable=attribute-error
+        s1=OnlyStatic(x=0, y=1).broadcast_to(shape),  # pytype: disable=attribute-error
     )
 
   @staticmethod
@@ -192,7 +192,7 @@ class NestedOnlyStatic(dca.DataclassArray):
 
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
-class WithStatic(dca.DataclassArray):
+class WithStatic(dca.DataclassArray):  # pytype: disable=base-class-error
   """Mix of static and array fields."""
 
   static: str
@@ -228,20 +228,20 @@ class WithStatic(dca.DataclassArray):
     assert p.static == 'abc'
 
 
-def _assert_common(p: dca.DataclassArray, shape: Shape, xnp: enp.NpModule):
+def _assert_common(p: dca.DataclassArray, shape: Shape, xnp: enp.NpModule):  # pytype: disable=invalid-annotation
   """Test the len(p)."""
   assert p  # Object evaluate to True
-  assert p.shape == shape
+  assert p.shape == shape  # pytype: disable=attribute-error
 
   p_np = np.empty(shape)
-  assert p.size == p_np.size
-  assert p.ndim == p_np.ndim
-  assert p.xnp is xnp
+  assert p.size == p_np.size  # pytype: disable=attribute-error
+  assert p.ndim == p_np.ndim  # pytype: disable=attribute-error
+  assert p.xnp is xnp  # pytype: disable=attribute-error
   if shape:
-    assert len(p) == shape[0]
+    assert len(p) == shape[0]  # pytype: disable=wrong-arg-types
   else:
     with pytest.raises(TypeError, match='of unsized '):
-      _ = len(p)
+      _ = len(p)  # pytype: disable=wrong-arg-types
 
 
 parametrize_dataclass_arrays = pytest.mark.parametrize(
@@ -406,7 +406,7 @@ def test_wrong_input_type():
     )
 
   @dca.dataclass_array(broadcast=True, cast_dtype=True)
-  class PointWrapper(dca.DataclassArray):
+  class PointWrapper(dca.DataclassArray):  # pytype: disable=base-class-error
     pts: Point
     rgb: f32['*shape 3']
 
@@ -451,7 +451,7 @@ def test_isometrie_wrong_input():
       t=np.zeros((3, 2)),
   )
   with pytest.raises(ValueError, match='cannot reshape array'):
-    p.reshape((2, 2))
+    p.reshape((2, 2))  # pytype: disable=attribute-error
 
 
 @pytest.mark.parametrize(
@@ -503,7 +503,7 @@ def test_empty(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 def test_absolute_axis(xnp: enp.NpModule):
   p = Isometrie(r=xnp.ones((3, 3)), t=xnp.ones((2,)))
-  p = p.broadcast_to((1, 2, 3, 4))
+  p = p.broadcast_to((1, 2, 3, 4))  # pytype: disable=attribute-error
   assert p.shape == (1, 2, 3, 4)
 
   assert p._to_absolute_axis(None) == (0, 1, 2, 3)
@@ -577,7 +577,7 @@ def test_broadcast(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 def test_infer_np(xnp: enp.NpModule):
   p = Point(x=xnp.ones((3,)), y=[0, 0, 0])  # y is casted to xnp
-  assert p.xnp is xnp
+  assert p.xnp is xnp  # pytype: disable=attribute-error
   assert enp.compat.is_array_xnp(p.y, xnp)
 
 
@@ -597,7 +597,7 @@ def test_tree_map(tree_map, dca_cls: DcaTest):
 
 def test_torch_device():
   p = Nested.make(shape=(2,), xnp=enp.lazy.torch)
-  p = p.cpu()
+  p = p.cpu()  # pytype: disable=attribute-error
   p = p.to('cpu')
   Nested.assert_val(p, (2,), xnp=enp.lazy.torch)
 
@@ -619,8 +619,8 @@ def test_vmap(xnp: enp.NpModule):
   @vmap_fn
   def fn(p: WithStatic) -> WithStatic:
     assert isinstance(p, WithStatic)
-    assert p.shape == ()  # pylint:disable=g-explicit-bool-comparison
-    return p.replace(x=p.x + 1)
+    assert p.shape == ()  # pylint:disable=g-explicit-bool-comparison  # pytype: disable=attribute-error
+    return p.replace(x=p.x + 1)  # pytype: disable=attribute-error
 
   x = WithStatic.make((batch_shape,), xnp=xnp)
   y = fn(x)
@@ -632,7 +632,7 @@ def test_vmap(xnp: enp.NpModule):
 
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_cast(xnp: enp.NpModule):
-  class PointNoCast(dca.DataclassArray):
+  class PointNoCast(dca.DataclassArray):  # pytype: disable=base-class-error
     x: FloatArray['*shape']
     y: IntArray['*shape']
 
@@ -646,7 +646,7 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
       x=xnp.asarray([1, 2, 3], dtype=xnp.float16),
       y=xnp.asarray([1, 2, 3], dtype=xnp.uint8),
   )
-  assert p.shape == (3,)
+  assert p.shape == (3,)  # pytype: disable=attribute-error
   assert enp.lazy.as_dtype(p.x.dtype) == np.float16
   assert enp.lazy.as_dtype(p.y.dtype) == np.uint8
 
@@ -654,7 +654,7 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_list(xnp: enp.NpModule):
   @dca.dataclass_array(cast_list=False)
-  class PointNoList(dca.DataclassArray):
+  class PointNoList(dca.DataclassArray):  # pytype: disable=base-class-error
     x: FloatArray['*shape']
     y: IntArray['*shape']
 
@@ -667,7 +667,7 @@ def test_dataclass_params_no_list(xnp: enp.NpModule):
 
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
-  class PointNoBroadcast(dca.DataclassArray):
+  class PointNoBroadcast(dca.DataclassArray):  # pytype: disable=base-class-error
     x: FloatArray['*shape']
     y: IntArray['*shape']
 
@@ -681,7 +681,7 @@ def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 @pytest.mark.parametrize('batch_shape', [(), (1, 3)])
 def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
-  class PointDynamicShape(dca.DataclassArray):
+  class PointDynamicShape(dca.DataclassArray):  # pytype: disable=base-class-error
     x: FloatArray[..., None, None]
     y: IntArray['... 3 _']
 
@@ -689,7 +689,7 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
       x=xnp.zeros(batch_shape + (2, 3), dtype=xnp.float32),
       y=xnp.zeros(batch_shape + (3, 1), dtype=xnp.int32),
   )
-  assert p.shape == batch_shape
+  assert p.shape == batch_shape  # pytype: disable=attribute-error
   assert p.x.shape == batch_shape + (2, 3)
   assert p.y.shape == batch_shape + (3, 1)
 
@@ -697,7 +697,7 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
       x=xnp.zeros(batch_shape + (3, 2), dtype=xnp.float32),
       y=xnp.zeros(batch_shape + (3, 1), dtype=xnp.int32),
   )
-  assert p2.shape == batch_shape
+  assert p2.shape == batch_shape  # pytype: disable=attribute-error
   assert p2.x.shape == batch_shape + (3, 2)
   assert p2.y.shape == batch_shape + (3, 1)
 
@@ -736,8 +736,8 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
 
 def test_class_getitem():
   assert Point == Point  # pylint: disable=comparison-with-itself
-  assert Point[''] == Point['']
-  assert Point['h w'] == Point['h w']
-  assert Point[''] != Point
-  assert Point[''] != Point['h w']
-  assert Point[''] != Isometrie['']
+  assert Point[''] == Point['']  # pytype: disable=not-indexable
+  assert Point['h w'] == Point['h w']  # pytype: disable=not-indexable
+  assert Point[''] != Point  # pytype: disable=not-indexable
+  assert Point[''] != Point['h w']  # pytype: disable=not-indexable
+  assert Point[''] != Isometrie['']  # pytype: disable=not-indexable

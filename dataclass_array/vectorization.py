@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ def vectorize_method(
 
   @functools.wraps(fn)
   @epy.maybe_reraise(prefix=lambda: f'Error in {fn.__qualname__}: ')
-  def decorated(
+  def decorated(  # pytype: disable=invalid-annotation
       self: array_dataclass.DataclassArray,
       *args: Any,
       **kwargs: Any,

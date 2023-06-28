@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ _DS = dca.field_utils.DataclassWithShape
 Ray = dca.testing.Ray
 
 
-class Camera(dca.DataclassArray):
+class Camera(dca.DataclassArray):  # pytype: disable=base-class-error
   pos: FloatArray[..., 3]
   dir: FloatArray[..., 3]
 
@@ -37,10 +37,10 @@ class Camera(dca.DataclassArray):
     [
         (int, [int]),
         (Ray, [Ray]),
-        (Ray['h w'], [Ray['h w']]),
-        (Ray[..., 3], [Ray[..., 3]]),
+        (Ray['h w'], [Ray['h w']]),  # pytype: disable=not-indexable
+        (Ray[..., 3], [Ray[..., 3]]),  # type: ignore
         (Union[Ray, int], [Ray, int]),
-        (Union[Ray['h w'], int], [Ray['h w'], int]),
+        (Union[Ray['h w'], int], [Ray['h w'], int]),  # pytype: disable=not-indexable
         (Union[Ray, int, None], [Ray, int, None]),
         (Optional[Ray], [Ray, None]),
         (Optional[Union[Ray, int]], [Ray, int, None]),
@@ -57,8 +57,8 @@ def test_get_leaf_types(hint, expected):
     [
         (int, None),
         (Ray, _DS(Ray, '...')),
-        (Ray['h w'], _DS(Ray, 'h w')),
-        (Ray[..., 3], _DS(Ray, '... 3')),
+        (Ray['h w'], _DS(Ray, 'h w')),  # pytype: disable=not-indexable
+        (Ray[..., 3], _DS(Ray, '... 3')),  # type: ignore
         (Optional[Ray], _DS(Ray, '...')),
         (Union[Ray, Camera], _DS(dca.DataclassArray, '...')),
         (Union[Ray, Camera, None], _DS(dca.DataclassArray, '...')),
@@ -79,8 +79,8 @@ def test_get_array_type(hint, expected):
     'hint, expected',
     [
         (Ray, _DS(Ray, '...')),
-        (Ray['h w'], _DS(Ray, 'h w')),
-        (Ray[..., 3], _DS(Ray, '... 3')),
+        (Ray['h w'], _DS(Ray, 'h w')),  # pytype: disable=not-indexable
+        (Ray[..., 3], _DS(Ray, '... 3')),  # type: ignore
     ],
 )
 def test_from_hint(hint, expected):
@@ -106,14 +106,14 @@ def test_get_array_type_error():
             ),
         ),
         (
-            Ray[..., 3],
+            Ray[..., 3],  # type: ignore
             dca.array_dataclass._ArrayFieldMetadata(
                 inner_shape_non_static=(3,),
                 dtype=Ray,
             ),
         ),
         (
-            Ray['*shape 4 _'],
+            Ray['*shape 4 _'],  # pytype: disable=not-indexable
             dca.array_dataclass._ArrayFieldMetadata(
                 inner_shape_non_static=(4, None),
                 dtype=Ray,

@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ def test_tree_map():
   def map_fn(x):
     return x * 10
 
-  result = tree_utils.tree_map(
+  result = tree_utils.tree_map(  # pytype: disable=wrong-arg-types
       map_fn,
       {
           'a': 1,
@@ -50,12 +50,12 @@ def test_tree_map():
       },
   }
 
-  assert tree_utils.tree_map(map_fn, [1, 2, 3]) == [10, 20, 30]
-  assert tree_utils.tree_map(map_fn, (1, 2, 3)) == (10, 20, 30)
-  assert tree_utils.tree_map(map_fn, {}) == {}  # pylint: disable=g-explicit-bool-comparison
-  assert tree_utils.tree_map(map_fn, ()) == ()  # pylint: disable=g-explicit-bool-comparison
-  assert tree_utils.tree_map(map_fn, {'x': ([])}) == {'x': ([])}
-  assert tree_utils.tree_map(map_fn, 1) == 10
+  assert tree_utils.tree_map(map_fn, [1, 2, 3]) == [10, 20, 30]  # pytype: disable=wrong-arg-types
+  assert tree_utils.tree_map(map_fn, (1, 2, 3)) == (10, 20, 30)  # pytype: disable=wrong-arg-types
+  assert tree_utils.tree_map(map_fn, {}) == {}  # pylint: disable=g-explicit-bool-comparison  # pytype: disable=wrong-arg-types
+  assert tree_utils.tree_map(map_fn, ()) == ()  # pylint: disable=g-explicit-bool-comparison  # pytype: disable=wrong-arg-types
+  assert tree_utils.tree_map(map_fn, {'x': ([])}) == {'x': ([])}  # pytype: disable=wrong-arg-types
+  assert tree_utils.tree_map(map_fn, 1) == 10  # pytype: disable=wrong-arg-types
 
 
 def test_tree_map_multi_args():
@@ -72,7 +72,7 @@ def test_tree_map_multi_args():
 def test_tree_map_chex():
   """Test tree_map with chex dataclasses."""
 
-  assert tree_utils.tree_map(lambda x: x * 10, A(x=1, y=2)) == A(x=10, y=20)
+  assert tree_utils.tree_map(lambda x: x * 10, A(x=1, y=2)) == A(x=10, y=20)  # pytype: disable=wrong-arg-types
 
   def add_fn(x, y):
     return x + y

@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ from etils import epy
 from etils.etree.typing import Tree
 from typing_extensions import Unpack, TypeVarTuple  # pytype: disable=not-supported-yet  # pylint: disable=g-multiple-import
 
-_InsT = TypeVarTuple('_InsT')
+_InsT = TypeVarTuple('_InsT')  # pytype: disable=wrong-arg-count
 _OutT = TypeVar('_OutT')
 
 
-def tree_map(  # pylint: disable=redefined-builtin
+def tree_map(  # pylint: disable=redefined-builtin  # pytype: disable=not-indexable
     fn: Callable[[Unpack[Tree[_InsT]]], _OutT],
     *trees: Unpack[Tree[_InsT]],
 ) -> Tree[_OutT]:

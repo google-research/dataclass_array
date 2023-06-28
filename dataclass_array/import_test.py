@@ -1,4 +1,4 @@
-# Copyright 2022 The dataclass_array Authors.
+# Copyright 2023 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ import dataclass_array as dca
 from etils import enp
 
 
-class A(dca.DataclassArray):
+class A(dca.DataclassArray):  # pytype: disable=base-class-error
   x: dca.typing.f32['*s']
 
 
 def test_lazy():
 
   x = A(x=[1.0, 2.0])
-  assert x.xnp is enp.lazy.np
+  assert x.xnp is enp.lazy.np  # pytype: disable=attribute-error
