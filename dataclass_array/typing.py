@@ -20,10 +20,9 @@ import typing
 from typing import Any, Optional, Tuple, Type, TypeVar, Union
 
 from etils import enp
-from etils.array_types import FloatArray
 
 if typing.TYPE_CHECKING:
-  from dataclass_array import array_dataclass
+  from dataclass_array import array_dataclass  # pylint: disable=g-bad-import-order,unused-import
 
 # ======== Array types (alias of `enp.typing`) ========
 

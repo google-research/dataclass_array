@@ -22,14 +22,19 @@ we need another API which doesn't.
 from __future__ import annotations
 
 import collections.abc
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
 from etils import epy
-from etils.etree.typing import Tree
-from typing_extensions import Unpack, TypeVarTuple  # pytype: disable=not-supported-yet  # pylint: disable=g-multiple-import
+from etils.etree.typing import Tree  # pylint: disable=g-importing-member
+from typing_extensions import TypeVarTuple, Unpack  # pytype: disable=not-supported-yet  # pylint: disable=g-multiple-import
 
-_InsT = TypeVarTuple('_InsT')
-_OutT = TypeVar('_OutT')
+# TODO(epot): Remove once pytype support `Unpack`
+del TypeVar, TypeVarTuple, Unpack
+Unpack = Any
+TypeVarTuple = Any
+
+_InsT = Any  # TypeVarTuple('_InsT')
+_OutT = Any  # TypeVar('_OutT')
 
 
 def tree_map(  # pylint: disable=redefined-builtin

@@ -25,7 +25,7 @@ from dataclass_array import field_utils
 from dataclass_array import shape_parsing
 from dataclass_array import type_parsing
 from dataclass_array.typing import Array
-from dataclass_array.typing import Axes, DcOrArray, DcOrArrayT, DTypeArg, DynamicShape, Shape  # pylint: disable=g-multiple-import
+from dataclass_array.typing import Axes, DTypeArg, DcOrArray, DcOrArrayT, DynamicShape, Shape  # pylint: disable=g-multiple-import,g-importing-member
 from dataclass_array.utils import np_utils
 from dataclass_array.utils import py_utils
 import einops
@@ -37,8 +37,6 @@ import numpy as np
 import typing_extensions
 from typing_extensions import Annotated, Literal, TypeAlias  # pylint: disable=g-multiple-import
 
-if typing.TYPE_CHECKING:
-  import torch  # pytype: disable=import-error
 
 lazy = enp.lazy
 
@@ -152,15 +150,16 @@ class MetaDataclassArray(type):
     return Annotated[cls, field_utils.ShapeAnnotation(spec)]
 
 
-@typing_extensions.dataclass_transform(  # pytype: disable=not-supported-yet
-    kw_only_default=True,
-    # TODO(b/272524683):Restore field specifier
-    # field_specifiers=(
-    #     dataclasses.Field,
-    #     dataclasses.field,
-    #     array_field,
-    # ),
-)
+# TODO(epot): Restore once pytype support this
+# @typing_extensions.dataclass_transform(
+#     kw_only_default=True,
+#     # TODO(b/272524683):Restore field specifier
+#     # field_specifiers=(
+#     #     dataclasses.Field,
+#     #     dataclasses.field,
+#     #     array_field,
+#     # ),
+# )
 class DataclassArray(metaclass=MetaDataclassArray):
   """Dataclass which behaves like an array.
 
