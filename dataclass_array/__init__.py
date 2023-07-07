@@ -34,6 +34,7 @@ from dataclass_array import typing
 from dataclass_array.array_dataclass import array_field as field
 from dataclass_array.array_dataclass import dataclass_array
 from dataclass_array.array_dataclass import DataclassArray
+from dataclass_array.ops import concat
 from dataclass_array.ops import stack
 from dataclass_array.vectorization import vectorize_method
 

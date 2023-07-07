@@ -16,20 +16,40 @@
 
 from __future__ import annotations
 
-from typing import Iterable  # pylint: disable=g-multiple-import
+import functools
+from typing import Any, Callable, Iterable, Optional  # pylint: disable=g-multiple-import
 
 from dataclass_array import array_dataclass
-from dataclass_array.typing import DcT
+from dataclass_array.typing import Array, DcT  # pylint: disable=g-multiple-import
 from dataclass_array.utils import np_utils
+from etils import enp
 from etils import epy
 
 
-def stack(
-    arrays: Iterable[DcT],  # list[_DcT['*shape']]
+def _ops_base(
+    arrays: Iterable[DcT],
     *,
-    axis: int = 0,
-) -> DcT:  # _DcT['len(arrays) *shape']:
-  """Stack dataclasses together."""
+    axis: int,
+    array_fn: Callable[
+        [
+            enp.NpModule,
+            int,
+            Any,  # array_dataclass._ArrayField[Array['*din']],
+        ],
+        Array['*dout'],
+    ],
+    dc_fn: Optional[
+        Callable[
+            [
+                enp.NpModule,
+                int,
+                Any,  # array_dataclass._ArrayField[DcT],
+            ],
+            DcT,
+        ]
+    ],
+) -> DcT:
+  """Base function for all ops."""
   arrays = list(arrays)
   first_arr = arrays[0]
 
@@ -61,9 +81,41 @@ def stack(
   # jax.tree_map(lambda x, y: x+y, (None, 10), (1, 2)) == (None, 12)
   # Similarly, static values will be the ones from the first element.
   merged_arr = first_arr._map_field(  # pylint: disable=protected-access
-      array_fn=lambda f: xnp.stack(  # pylint: disable=g-long-lambda
-          [getattr(arr, f.name) for arr in arrays], axis=axis
-      ),
-      dc_fn=lambda f: stack([getattr(arr, f.name) for arr in arrays]),
+      array_fn=functools.partial(array_fn, xnp, axis),
+      dc_fn=functools.partial(dc_fn, xnp, axis),
   )
   return merged_arr
+
+
+def stack(
+    arrays: Iterable[DcT],  # list[_DcT['*shape']]
+    *,
+    axis: int = 0,
+) -> DcT:  # _DcT['len(arrays) *shape']:
+  """Stack dataclasses together."""
+  return _ops_base(
+      arrays,
+      axis=axis,
+      array_fn=lambda xnp, axis, f: xnp.stack(  # pylint: disable=g-long-lambda
+          [getattr(arr, f.name) for arr in arrays], axis=axis
+      ),
+      dc_fn=lambda xnp, axis, f: stack(  # pylint: disable=g-long-lambda
+          [getattr(arr, f.name) for arr in arrays],
+          axis=axis,
+      ),
+  )
+
+
+def concat(arrays: Iterable[DcT], *, axis: int = 0) -> DcT:
+  """Concatenate dataclasses together."""
+  return _ops_base(
+      arrays,
+      axis=axis,
+      array_fn=lambda xnp, axis, f: xnp.concatenate(  # pylint: disable=g-long-lambda
+          [getattr(arr, f.name) for arr in arrays], axis=axis
+      ),
+      dc_fn=lambda xnp, axis, f: concat(  # pylint: disable=g-long-lambda
+          [getattr(arr, f.name) for arr in arrays],
+          axis=axis,
+      ),
+  )

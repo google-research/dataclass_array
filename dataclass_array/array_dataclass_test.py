@@ -734,6 +734,23 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
     )
 
 
+@enp.testing.parametrize_xnp()
+@pytest.mark.parametrize('batch_shape', [(1,), (3,)])
+def test_concatenate(xnp: enp.NpModule, batch_shape: Shape):
+  class TestConcatenateClass(dca.DataclassArray):
+    x: FloatArray['*shape 3']
+    y: FloatArray['*shape']
+
+  p = TestConcatenateClass(
+      x=xnp.zeros(batch_shape + (3,), dtype=xnp.float32),
+      y=xnp.zeros(batch_shape, dtype=xnp.float32),
+  )
+
+  p_concatenated = dca.concat([p, p, p])
+  assert p_concatenated.x.shape == tuple(x * 3 for x in batch_shape) + (3,)
+  assert p_concatenated.y.shape == tuple(x * 3 for x in batch_shape)
+
+
 def test_class_getitem():
   assert Point == Point  # pylint: disable=comparison-with-itself
   assert Point[''] == Point['']
