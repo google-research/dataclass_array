@@ -28,6 +28,7 @@ Visu3d <https://github.com/google-research/visu3d>
 :hidden:
 :caption: Links
 
+Visu3d <https://visu3d.readthedocs.io/>
 GitHub <https://github.com/google-research/dataclass_array>
 ```
 
