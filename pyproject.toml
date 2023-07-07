@@ -45,6 +45,10 @@ dev = [
     "tf-nightly",
     "torch",
 ]
+docs = [
+    "sphinx-apitree[ext] @ https://github.com/conchylicultor/sphinx-apitree",
+    "dataclass_array[dev]",  # Install lazy deps
+]
 
 [tool.pyink]
 # Formatting configuration to follow Google style-guide
