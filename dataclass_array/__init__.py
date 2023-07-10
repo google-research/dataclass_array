@@ -21,7 +21,7 @@ numpy arrays.
 
 import sys
 
-# pylint: disable=g-import-not-at-top,g-bad-import-order
+# pylint: disable=g-import-not-at-top,g-bad-import-order,g-importing-member
 
 pytest = sys.modules.get('pytest')
 if pytest:
@@ -44,6 +44,6 @@ from dataclass_array import testing
 
 # A new PyPI release will be pushed everytime `__version__` is increased
 # When changing this, also update the CHANGELOG.md
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 
 del sys, pytest
