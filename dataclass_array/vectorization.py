@@ -307,22 +307,25 @@ def _vmap_method(
     xnp: enp.NpModule,
 ) -> _Out:
   """Vectorize self using the `xnp` backend. Assume `self` was flatten."""
-  if xnp is enp.lazy.np:
+  is_jax = enp.lazy.is_jax_xnp(xnp)
+  is_torch = enp.lazy.is_torch_xnp(xnp)
+
+  if enp.lazy.is_np_xnp(xnp):
     return _vmap_method_np(args, map_non_static=map_non_static)
-  elif xnp is enp.lazy.jnp:
+  elif is_jax or is_torch:
+    if is_jax:
+      make_vmap_fn = _jax_vmap_cached
+    elif is_torch:
+      make_vmap_fn = _torch_vmap_cached
+    else:
+      raise ValueError('Unexpected')
     return _vmap_method_jax_torch(
         args,
         map_non_static=map_non_static,
-        make_vmap_fn=_jax_vmap_cached,
+        make_vmap_fn=make_vmap_fn,
     )
-  elif xnp is enp.lazy.tnp:
+  elif enp.lazy.is_tf_xnp(xnp):
     return _vmap_method_tf(args, map_non_static=map_non_static)
-  elif xnp is enp.lazy.torch:
-    return _vmap_method_jax_torch(
-        args,
-        map_non_static=map_non_static,
-        make_vmap_fn=_torch_vmap_cached,
-    )
   raise TypeError(f'Invalid numpy module: {xnp}')
 
 
@@ -400,11 +403,49 @@ def _vmap_method_tf(
     map_non_static: _MapNonStatic,
 ) -> _OutT:
   """vectorization using `tf` backend."""
-  # TODO(epot): Use `tf.vectorized_map()` once TF support custom nesting
-  raise NotImplementedError(
-      'vectorization not supported in TF yet due to lack of `tf.nest` '
-      'support. Please upvote or comment b/152678472.'
+
+  # Flatten args
+
+  args_info = args.map(lambda _: None)
+  # ... except the non-static ones
+  args_info = map_non_static(lambda _: 0, args_info)
+
+  # Split args in static/non-static
+  static_args = {}
+  nonstatic_args = {}
+  for a, ai in zip(args, args_info):
+    assert a.name == ai.name
+    if ai.value is None:
+      static_args[a.name] = a.value
+    else:
+      nonstatic_args[a.name] = a.value
+
+  def new_fn(non_statics, statics):
+    # Merge args and call the function
+    new_args = args.replace_args_values(dict(**non_statics, **statics))
+    return new_args.call()
+
+  # `vectorized_map(` uses autograph, which fails, so use tf.map_fn instead
+  return _better_map_fn(  #
+      functools.partial(new_fn, statics=static_args),
+      nonstatic_args,
   )
+
+
+# tf.map_fn do not support different output signature:
+def _better_map_fn(fn, elems, **kwargs):
+  """Like `tf.map_fn`."""
+  tf = enp.lazy.tf
+  if 'fn_output_signature' not in kwargs:
+    elem_spec = tf.nest.map_structure(
+        lambda t: tf.type_spec_from_value(t)._unbatch(), elems  # pylint: disable=protected-access
+    )
+    output_spec = tf.nest.map_structure(
+        tf.type_spec_from_value,
+        tf.function(fn).get_concrete_function(elem_spec).structured_outputs,
+    )
+    kwargs['fn_output_signature'] = output_spec
+  return tf.map_fn(fn, elems, **kwargs)
 
 
 def _stack(*vals: _OutT) -> _OutT:
