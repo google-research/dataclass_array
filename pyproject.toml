@@ -29,7 +29,8 @@ dynamic = ["version"]
 [project.urls]
 homepage = "https://github.com/google-research/dataclass_array"
 repository = "https://github.com/google-research/dataclass_array"
-# Other: `documentation`, `changelog`
+documentation = "https://dataclass-array.readthedocs.io"
+changelog = "https://github.com/google-research/dataclass_array/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 # Development deps (unittest, linting, formating,...)
