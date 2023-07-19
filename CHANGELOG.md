@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Add `tf.nest` compatibility for `DataclassArray`.
+
 ## [1.4.2] - 2023-07-10
 
 *   Add `dca.concat` method in addition to `dca.stack`.

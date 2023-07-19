@@ -582,6 +582,24 @@ class DataclassArray(metaclass=MetaDataclassArray):
   # ====== Internal ======
 
   @epy.cached_property
+  def _all_fields_empty(self) -> bool:
+    """Returns True if the `dataclass_array` is invalid."""
+    if not self._array_fields:  # All fields are `None` / `object`
+      # No fields have been defined.
+      # This can be the case internally by jax which apply some
+      # `tree_map(lambda x: sentinel)`.
+      return True
+
+    # `tf.nest` sometimes replace values by dummy `.` inside
+    # `assert_same_structure`
+    if enp.lazy.has_tf:
+      from tensorflow.python.util import nest_util  # pytype: disable=import-error  # pylint: disable=g-direct-tensorflow-import,g-import-not-at-top
+
+      if any(f.value is nest_util._DOT for f in self._array_fields):  # pylint: disable=protected-access,not-an-iterable
+        return True
+    return False
+
+  @epy.cached_property
   def _all_array_fields(self) -> dict[str, _ArrayField]:
     """All array fields, including `None` values."""
     return {  # pylint: disable=g-complex-comprehension
@@ -603,7 +621,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   def _cast_xnp_dtype_inplace(self) -> Optional[enp.NpModule]:
     """Validate `xnp` are consistent and cast `np` -> `xnp` in-place."""
-    if not self._array_fields:  # All fields are `None` / `object`
+    if self._all_fields_empty:  # pylint: disable=using-constant-test
       return None
 
     # Validate the dtype
@@ -627,12 +645,19 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
     def _cast_field(f: _ArrayField) -> None:
       try:
-        new_value = np_utils.asarray(
-            f.value,
-            xnp=xnp,
-            dtype=f.dtype,
-            cast_dtype=self.__dca_params__.cast_dtype,
-        )
+        # Supports for TensorSpec (e.g. in `tf.function` signature)
+        if enp.lazy.is_tf_xnp(xnp) and isinstance(
+            f.value, enp.lazy.tf.TensorSpec
+        ):
+          # TODO(epot): Actually check the dtype
+          new_value = f.value
+        else:
+          new_value = np_utils.asarray(
+              f.value,
+              xnp=xnp,
+              dtype=f.dtype,
+              cast_dtype=self.__dca_params__.cast_dtype,
+          )
         self._setattr(f.name, new_value)
         # After the field has been set, we validate the shape
         f.assert_shape()
@@ -648,9 +673,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   def _broadcast_shape_inplace(self) -> Optional[Shape]:
     """Validate the shapes are consistent and broadcast values in-place."""
-    if not self._array_fields:  # No fields have been defined.
-      # This can be the case internally by jax which apply some
-      # `tree_map(lambda x: sentinel)`.
+    if self._all_fields_empty:  # pylint: disable=using-constant-test
       return None
 
     # First collect all shapes and compute the final shape.
@@ -735,7 +758,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
       else:
         return array_fn(f)
 
-    new_values = {f.name: _apply_field_dn(f) for f in self._array_fields}  # pylint: disable=not-an-iterable
+    new_values = {f.name: _apply_field_dn(f) for f in self._array_fields}  # pylint: disable=not-an-iterable,protected-access
     # For performance, do not call replace to save the constructor call
     if not _inplace:
       return self.replace(**new_values)
@@ -791,6 +814,18 @@ class DataclassArray(metaclass=MetaDataclassArray):
       for k, v in non_init_fields.items():
         self._setattr(k, v)  # pylint: disable=protected-access
     return self
+
+  def __tf_flatten__(self) -> tuple[_TreeMetadata, list[DcOrArray]]:
+    components, metadata = self.tree_flatten()
+    return metadata, components
+
+  @classmethod
+  def __tf_unflatten__(
+      cls: Type[_DcT],
+      metadata: _TreeMetadata,
+      components: list[DcOrArray],
+  ) -> _DcT:
+    return cls.tree_unflatten(metadata, components)
 
   def _setattr(self, name: str, value: Any) -> None:
     """Like setattr, but support `frozen` dataclasses."""

@@ -20,7 +20,7 @@ from typing import Any
 
 import dataclass_array as dca
 from dataclass_array.typing import FloatArray, IntArray, f32, i32  # pylint: disable=g-multiple-import
-from dataclass_array.typing import Shape  # pylint: disable=g-multiple-import
+from dataclass_array.typing import Shape  # pylint: disable=g-multiple-import,g-importing-member
 from etils import enp
 import numpy as np
 import pytest
@@ -585,6 +585,7 @@ def test_infer_np(xnp: enp.NpModule):
 @pytest.mark.parametrize(
     'tree_map',
     [
+        enp.lazy.tf.nest.map_structure,
         enp.lazy.jax.tree_map,
         enp.lazy.torch.utils._pytree.tree_map,
     ],
@@ -593,6 +594,17 @@ def test_tree_map(tree_map, dca_cls: DcaTest):
   p = dca_cls.make(shape=(3,), xnp=np)
   p = tree_map(lambda x: x[None, ...], p)
   dca_cls.assert_val(p, (1, 3), xnp=np)
+
+
+@pytest.mark.skip('tf.data fail currently')  # TODO(epot): Restore
+def test_tf_data():
+  ds = tf.data.Dataset.range(3)
+  ds = ds.map(lambda x: Point(x=x, y=x))
+
+  for ex in ds:
+    assert isinstance(ex, Point)
+    assert ex.x.shape == ()  # pylint: disable=g-explicit-bool-comparison
+    assert ex.y.shape == ()  # pylint: disable=g-explicit-bool-comparison
 
 
 def test_torch_device():

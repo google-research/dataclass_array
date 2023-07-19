@@ -50,7 +50,6 @@ class Signature(Generic[_OutT]):
 
   y = bound_args.call()  # Call the function
   ```
-
   """
 
   fn: _Fn[_OutT]
@@ -202,7 +201,7 @@ class BoundArgs(Generic[_ArgT, _OutT]):
       self,
       fn: Callable[[BoundArg[_ArgT]], _NewArgT],
   ) -> BoundArgs[_NewArgT, _OutT]:
-    """Apply validation/modification to the arguments value."""
+    """Apply validation/modification to all `BoundArg`."""
 
     def _fn(arg: BoundArg[_ArgT]) -> _NewArgT:  # pytype: disable=invalid-annotation
       try:
@@ -213,9 +212,14 @@ class BoundArgs(Generic[_ArgT, _OutT]):
             prefix=f'For arg {arg.pos} ({arg.name!r}):\n',
         )
 
+    return self.replace_args_values({arg.name: _fn(arg) for arg in self})
+
+  def replace_args_values(
+      self, new_values: dict[str, _NewArgT]
+  ) -> BoundArgs[_NewArgT, _OutT]:
     bound_args = inspect.BoundArguments(
         signature=self.bound_args.signature,
-        arguments={arg.name: _fn(arg) for arg in self},  # pytype: disable=wrong-arg-types
+        arguments=new_values,  # pytype: disable=wrong-arg-types
     )
     return self.replace(bound_args=bound_args)  # pytype: disable=attribute-error
 
