@@ -765,10 +765,10 @@ class DataclassArray(metaclass=MetaDataclassArray):
     else:
       return self
 
-  def tree_flatten(self) -> tuple[list[DcOrArray], _TreeMetadata]:
+  def tree_flatten(self) -> tuple[tuple[DcOrArray, ...], _TreeMetadata]:
     """`jax.tree_utils` support."""
     # We flatten all values (and not just the non-None ones)
-    array_field_values = [f.value for f in self._all_array_fields.values()]
+    array_field_values = tuple(f.value for f in self._all_array_fields.values())
     metadata = _TreeMetadata(
         array_field_names=list(self._all_array_fields.keys()),
         non_array_field_kwargs={
@@ -815,7 +815,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
         self._setattr(k, v)  # pylint: disable=protected-access
     return self
 
-  def __tf_flatten__(self) -> tuple[_TreeMetadata, list[DcOrArray]]:
+  def __tf_flatten__(self) -> tuple[_TreeMetadata, tuple[DcOrArray, ...]]:
     components, metadata = self.tree_flatten()
     return metadata, components
 

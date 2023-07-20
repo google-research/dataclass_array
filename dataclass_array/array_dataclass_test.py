@@ -596,7 +596,6 @@ def test_tree_map(tree_map, dca_cls: DcaTest):
   dca_cls.assert_val(p, (1, 3), xnp=np)
 
 
-@pytest.mark.skip('tf.data fail currently')  # TODO(epot): Restore
 def test_tf_data():
   ds = tf.data.Dataset.range(3)
   ds = ds.map(lambda x: Point(x=x, y=x))
