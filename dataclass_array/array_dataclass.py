@@ -348,7 +348,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
       The dataclass array with the new shape
     """
     if isinstance(shape, str):  # Einops support
-      return self._map_field(
+      return self._map_field(  # pylint: disable=protected-access
           array_fn=lambda f: einops.rearrange(  # pylint: disable=g-long-lambda
               f.value,
               np_utils.to_absolute_einops(shape, nlastdim=len(f.inner_shape)),
@@ -365,7 +365,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
       def _reshape(f: _ArrayField):
         return f.value.reshape(shape + f.inner_shape)
 
-      return self._map_field(array_fn=_reshape, dc_fn=_reshape)
+      return self._map_field(array_fn=_reshape, dc_fn=_reshape)  # pylint: disable=protected-access
 
   def flatten(self: _DcT) -> _DcT:
     """Flatten the batch shape."""
@@ -373,7 +373,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   def broadcast_to(self: _DcT, shape: Shape) -> _DcT:
     """Broadcast the batch shape."""
-    return self._map_field(
+    return self._map_field(  # pylint: disable=protected-access
         array_fn=lambda f: f.broadcast_to(shape),
         dc_fn=lambda f: f.broadcast_to(shape),
     )
@@ -456,7 +456,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
       fn: Callable[[Array['*din']], Array['*dout']],
   ) -> _DcT:
     """Apply a transformation on all arrays from the fields."""
-    return self._map_field(
+    return self._map_field(  # pylint: disable=protected-access
         array_fn=lambda f: fn(f.value),
         dc_fn=lambda f: f.value.map_field(fn),
     )
@@ -530,7 +530,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
       array_fn = lambda f: xnp.asarray(f.value)
 
     # Update all childs
-    new_self = self._map_field(
+    new_self = self._map_field(  # pylint: disable=protected-access
         array_fn=array_fn,
         dc_fn=lambda f: f.value.as_xnp(xnp),
     )
@@ -593,7 +593,9 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # `tf.nest` sometimes replace values by dummy `.` inside
     # `assert_same_structure`
     if enp.lazy.has_tf:
-      from tensorflow.python.util import nest_util  # pytype: disable=import-error  # pylint: disable=g-direct-tensorflow-import,g-import-not-at-top
+      # pylint: disable=g-direct-tensorflow-import,g-import-not-at-top
+      from tensorflow.python.util import nest_util  # pytype: disable=import-error
+      # pylint: enable=g-direct-tensorflow-import,g-import-not-at-top
 
       if any(f.value is nest_util._DOT for f in self._array_fields):  # pylint: disable=protected-access,not-an-iterable
         return True
@@ -890,7 +892,7 @@ def _init_cls(self: DataclassArray) -> None:
     # DataclassArray without any array fields
     # Hack: To support `.xnp`, `.shape`, we add a dummy empty field which
     # is propagated by the various ops.
-    dca_fields_metadata[_DUMMY_ARRAY_FIELD] = _ArrayFieldMetadata(
+    dca_fields_metadata[_DUMMY_ARRAY_FIELD] = _ArrayFieldMetadata(  # pytype: disable=wrong-arg-types
         inner_shape_non_static=(),
         dtype=np.float32,
     )
@@ -1006,12 +1008,12 @@ class _ArrayFieldMetadata:
   Attributes:
     inner_shape_non_static: Inner shape. Can contain non-static dims (e.g.
       `(None, 3)`)
-    dtype: Type of the array. Can be `array_types.dtypes.DType` or
+    dtype: Type of the array. Can be `enp.dtypes.DType` or
       `dca.DataclassArray` for nested arrays.
   """
 
   inner_shape_non_static: DynamicShape
-  dtype: Union[array_types.dtypes.DType, Type[DataclassArray]]
+  dtype: Union[enp.dtypes.DType, Type[DataclassArray]]
 
   def __post_init__(self):
     """Normalizing/validating the shape/dtype."""
@@ -1020,7 +1022,7 @@ class _ArrayFieldMetadata:
 
     # Validate/normalize the dtype
     if not self.is_dataclass:
-      self.dtype = array_types.dtypes.DType.from_value(self.dtype)
+      self.dtype = enp.dtypes.DType.from_value(self.dtype)
       # TODO(epot): Filter invalid dtypes, like `str` ?
 
   def to_dict(self) -> dict[str, Any]:
