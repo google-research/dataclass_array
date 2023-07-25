@@ -19,13 +19,12 @@ And utils intended to work on both `xnp.ndarray` and `dca.DataclassArray`.
 
 from __future__ import annotations
 
-from typing import Any, Union, Optional
+from typing import Any, Optional, Union
 
 from dataclass_array import array_dataclass
-from dataclass_array.typing import Axes, DcOrArrayT, DTypeArg, Shape  # pylint: disable=g-multiple-import
-from etils import array_types
+from dataclass_array.typing import Axes, DTypeArg, DcOrArrayT, Shape  # pylint: disable=g-multiple-import,g-importing-member
 from etils import enp
-from etils.array_types import Array, ArrayLike  # pylint: disable=g-multiple-import
+from etils.array_types import Array, ArrayLike  # pylint: disable=g-multiple-import,g-importing-member
 
 # Maybe some of those could live in `enp` ?
 
@@ -124,7 +123,7 @@ def asarray(
     return x.as_xnp(xnp)
 
   # Handle ndarray
-  dtype = array_types.dtypes.DType.from_value(dtype)
+  dtype = enp.dtypes.DType.from_value(dtype)
   return dtype.asarray(x, xnp=xnp, casting='all' if cast_dtype else 'none')
 
 
