@@ -23,6 +23,7 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Fix look_at compatibility with pytorch
 *   Add `dca.vectorize_method` compatibility for `tf.nest`/`tf.data`.
 
 ## [1.5.0] - 2023-07-10
