@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Add `dca.vectorize_method` compatibility for `tf.nest`/`tf.data`.
+
 ## [1.5.0] - 2023-07-10
 
 *   Add `tf.nest`/`tf.data` compatibility for `DataclassArray`.

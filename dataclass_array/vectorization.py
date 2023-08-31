@@ -325,13 +325,8 @@ def _vmap_method(
         make_vmap_fn=make_vmap_fn,
     )
   elif enp.lazy.is_tf_xnp(xnp):
-    # return _vmap_method_tf(args, map_non_static=map_non_static)
+    return _vmap_method_tf(args, map_non_static=map_non_static)
 
-    # TODO(epot): Use `tf.vectorized_map()` once TF support custom nesting
-    raise NotImplementedError(
-        'vectorization not supported in TF yet due to lack of `tf.nest` '
-        'support. Please upvote or comment b/152678472.'
-    )
   raise TypeError(f'Invalid numpy module: {xnp}')
 
 

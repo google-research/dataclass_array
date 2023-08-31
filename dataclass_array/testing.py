@@ -88,10 +88,7 @@ def assert_array_equal(
 def skip_vmap_unavailable(xnp: enp.NpModule, *, skip_torch: str = '') -> None:
   """Skip the test when vmap not available."""
   skip = False
-  if enp.lazy.is_tf_xnp(xnp):
-    # TODO(b/152678472): TF do not support vmap & tf.nest
-    skip = True
-  elif enp.lazy.is_torch_xnp(xnp):
+  if enp.lazy.is_torch_xnp(xnp):
     if skip_torch:
       skip = True
   if skip:
