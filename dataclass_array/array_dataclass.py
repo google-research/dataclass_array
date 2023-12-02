@@ -1103,6 +1103,9 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
       # In `jax/_src/api_util.py` for `flatten_axes`, jax set all values to a
       # dummy sentinel `object()` value.
       return True
+    elif isinstance(self.value, enp.ArraySpec):
+      # `etree.spec_like` compatibility
+      return True
     elif (
         isinstance(self.value, DataclassArray) and not self.value._array_fields  # pylint: disable=protected-access
     ):
