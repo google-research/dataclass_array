@@ -271,7 +271,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # Register the tree_map here instead of `__init_subclass__` as `jax` may
     # not have been imported yet during import.
     if enp.lazy.has_jax and not cls._dca_jax_tree_registered:  # pylint: disable=protected-access
-      enp.lazy.jax.tree_util.register_pytree_node_class(cls)
+      enp.lazy.jax.tree_util.register_pytree_with_keys_class(cls)
       cls._dca_jax_tree_registered = True  # pylint: disable=protected-access
 
     if enp.lazy.has_torch and not cls._dca_torch_tree_registered:  # pylint: disable=protected-access
@@ -295,7 +295,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
     # Validate the batch shape is consistent
     # However, we need to be careful that `_ArrayField` never uses
-    # `@epy.cached_property`
+    # `@functools.cached_property`
     shape = self._broadcast_shape_inplace()
 
     # TODO(epot): When to validate (`field.validate()`)
@@ -581,7 +581,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   # ====== Internal ======
 
-  @epy.cached_property
+  @functools.cached_property
   def _all_fields_empty(self) -> bool:
     """Returns True if the `dataclass_array` is invalid."""
     if not self._array_fields:  # All fields are `None` / `object`
@@ -601,7 +601,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
         return True
     return False
 
-  @epy.cached_property
+  @functools.cached_property
   def _all_array_fields(self) -> dict[str, _ArrayField]:
     """All array fields, including `None` values."""
     return {  # pylint: disable=g-complex-comprehension
@@ -613,7 +613,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
         for name, field_metadata in self._dca_fields_metadata.items()  # pylint: disable=protected-access
     }
 
-  @epy.cached_property
+  @functools.cached_property
   def _array_fields(self) -> list[_ArrayField]:
     """All active array fields (non-None), including static ones."""
     # Filter `None` values
@@ -767,10 +767,16 @@ class DataclassArray(metaclass=MetaDataclassArray):
     else:
       return self
 
-  def tree_flatten(self) -> tuple[tuple[DcOrArray, ...], _TreeMetadata]:
+  def tree_flatten_with_keys(
+      self,
+  ) -> tuple[tuple[DcOrArray, ...], _TreeMetadata]:
     """`jax.tree_utils` support."""
+    tree_util = enp.lazy.jax.tree_util
     # We flatten all values (and not just the non-None ones)
-    array_field_values = tuple(f.value for f in self._all_array_fields.values())
+    array_field_values = tuple(
+        (tree_util.GetAttrKey(k), f.value)
+        for k, f in self._all_array_fields.items()
+    )
     metadata = _TreeMetadata(
         array_field_names=list(self._all_array_fields.keys()),
         non_array_field_kwargs={
@@ -1070,7 +1076,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     # empty shapes to True `bool(shape) == True` when `shape=()`
     return tuple(self.value.shape)
 
-  @epy.cached_property
+  @functools.cached_property
   def inner_shape(self) -> Shape:
     """Returns the the static shape resolved for the current value."""
     if not self.inner_shape_non_static:
@@ -1103,14 +1109,14 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
       # In `jax/_src/api_util.py` for `flatten_axes`, jax set all values to a
       # dummy sentinel `object()` value.
       return True
-    elif isinstance(self.value, enp.ArraySpec):
-      # `etree.spec_like` compatibility
-      return True
     elif (
         isinstance(self.value, DataclassArray) and not self.value._array_fields  # pylint: disable=protected-access
     ):
       # Nested dataclass case (if all attributes are `object`, so no active
       # array fields)
+      return True
+    elif enp.array_spec.is_fake_array(self.value):
+      # `etree.spec_like`, Flax summary, ShapeDtypeStruct, ... compatibility
       return True
     return False
 
