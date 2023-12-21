@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Fix `etree.spec_like` support
+
 ## [1.5.1] - 2023-08-30
 
 *   Fix look_at compatibility with pytorch
