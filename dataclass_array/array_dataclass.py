@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import dataclasses
 import functools
+import sys
 import typing
 from typing import Any, Callable, ClassVar, Generic, Iterator, Optional, Set, Tuple, Type, TypeVar, Union
 
@@ -1103,14 +1104,14 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
       # In `jax/_src/api_util.py` for `flatten_axes`, jax set all values to a
       # dummy sentinel `object()` value.
       return True
-    elif isinstance(self.value, enp.ArraySpec):
-      # `etree.spec_like` compatibility
-      return True
     elif (
         isinstance(self.value, DataclassArray) and not self.value._array_fields  # pylint: disable=protected-access
     ):
       # Nested dataclass case (if all attributes are `object`, so no active
       # array fields)
+      return True
+    elif enp.array_spec.is_fake_array(self.value):
+      # `etree.spec_like`, Flax summary, ShapeDtypeStruct, ... compatibility
       return True
     return False
 
