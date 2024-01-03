@@ -23,7 +23,7 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
-*   Fix `etree.spec_like` support
+*   Fix `etree.spec_like`, `jax.ShapeDtypeStruct`,... support
 
 ## [1.5.1] - 2023-08-30
 
