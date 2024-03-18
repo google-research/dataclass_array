@@ -23,6 +23,7 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*  Drop Python 3.10 support
 *   Fix `etree.spec_like`, `jax.ShapeDtypeStruct`,... support
 *   Changed `jax.tree_util` keep paths (for better flatten repr)
 

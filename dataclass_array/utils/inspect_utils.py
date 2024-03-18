@@ -1,4 +1,4 @@
-# Copyright 2023 The dataclass_array Authors.
+# Copyright 2024 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import inspect
 from typing import Any, Callable, Generic, Iterator, Mapping, Optional, TypeVar, Union
 
@@ -130,8 +131,8 @@ class BoundArgs(Generic[_ArgT, _OutT]):
       fn = self.fn
     return fn(*self.bound_args.args, **self.bound_args.kwargs)
 
-  @epy.cached_property  # pytype: disable=invalid-annotation
-  def _arguments_list(self) -> list[BoundArg[_ArgT]]:  # pytype: disable=invalid-annotation  # py39-upgrade
+  @functools.cached_property
+  def _arguments_list(self) -> list[BoundArg[_ArgT]]:
     arg_items = self.bound_args.arguments.items()
     return [
         BoundArg(  # pylint: disable=g-complex-comprehension
@@ -143,8 +144,8 @@ class BoundArgs(Generic[_ArgT, _OutT]):
         for i, (name, value) in enumerate(arg_items)
     ]
 
-  @epy.cached_property  # pytype: disable=invalid-annotation
-  def _arguments_dict(self) -> dict[str, BoundArg[_ArgT]]:  # pytype: disable=invalid-annotation  # py39-upgrade
+  @functools.cached_property
+  def _arguments_dict(self) -> dict[str, BoundArg[_ArgT]]:
     return {arg.name: arg for arg in self._arguments_list}  # pylint: disable=not-an-iterable
 
   def __getitem__(self, key: Union[int, str]) -> BoundArg[_ArgT]:
