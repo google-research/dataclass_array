@@ -23,7 +23,9 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
-*  Drop Python 3.10 support
+## [1.5.2] - 2024-03-19
+
+*   Drop Python 3.10 support
 *   Fix `etree.spec_like`, `jax.ShapeDtypeStruct`,... support
 *   Changed `jax.tree_util` keep paths (for better flatten repr)
 
@@ -84,7 +86,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 *   Initial release
 
-[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/google-research/dataclass_array/compare/v1.5.2...HEAD
+[1.5.1]: https://github.com/google-research/dataclass_array/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/google-research/dataclass_array/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/google-research/dataclass_array/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/google-research/dataclass_array/compare/v1.4.1...v1.4.2
