@@ -586,7 +586,7 @@ def test_infer_np(xnp: enp.NpModule):
     'tree_map',
     [
         enp.lazy.tf.nest.map_structure,
-        enp.lazy.jax.tree_map,
+        enp.lazy.jax.tree.map,
         enp.lazy.torch.utils._pytree.tree_map,
     ],
 )

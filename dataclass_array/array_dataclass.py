@@ -194,7 +194,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     (`pos` and `scale` in the above example).
   * Static fields: Other non-numpy field. Are not modified by reshaping,... (
     `name` in the above example).
-    Static fields are also ignored in `jax.tree_map`.
+    Static fields are also ignored in `jax.tree.map`.
 
   `DataclassArray` detect array fields if either:
 

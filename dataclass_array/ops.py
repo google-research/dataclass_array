@@ -77,8 +77,8 @@ def _ops_base(
 
   # Iterating over only the fields of the `first_arr` will skip optional fields
   # if those are not set in `first_arr`, even if they are present in others.
-  # But is consistent with `jax.tree_map`:
-  # jax.tree_map(lambda x, y: x+y, (None, 10), (1, 2)) == (None, 12)
+  # But is consistent with `jax.tree.map`:
+  # jax.tree.map(lambda x, y: x+y, (None, 10), (1, 2)) == (None, 12)
   # Similarly, static values will be the ones from the first element.
   merged_arr = first_arr._map_field(  # pylint: disable=protected-access
       array_fn=functools.partial(array_fn, xnp, axis),

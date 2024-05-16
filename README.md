@@ -73,7 +73,7 @@ A `DataclassArray` has 2 types of fields:
 *   Array fields: Fields batched like numpy arrays, with reshape, slicing,...
     Can be `xnp.ndarray` or nested `dca.DataclassArray`.
 *   Static fields: Other non-numpy field. Are not modified by reshaping,...
-    Static fields are also ignored in `jax.tree_map`.
+    Static fields are also ignored in `jax.tree.map`.
 
 ```python
 class MyArray(dca.DataclassArray):
@@ -159,7 +159,7 @@ To test on Colab, see the `visu3d` dataclass
 
     ```python
     num_rays = math.prod(rays.origins.shape[:-1])
-    rays = jax.tree_map(lambda r: r.reshape((num_rays, -1)), rays)
+    rays = jax.tree.map(lambda r: r.reshape((num_rays, -1)), rays)
     ```
 
     After (`rays` is `DataclassArray`):
