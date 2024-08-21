@@ -55,13 +55,13 @@ def test_to_absolute_axis():
   assert np_utils.to_absolute_axis((0, 1, -1), ndim=4) == (0, 1, 3)
   assert np_utils.to_absolute_axis((-1, -2), ndim=4) == (3, 2)
 
-  with pytest.raises(np.AxisError):
+  with pytest.raises(np.exceptions.AxisError):
     assert np_utils.to_absolute_axis(4, ndim=4)
 
-  with pytest.raises(np.AxisError):
+  with pytest.raises(np.exceptions.AxisError):
     assert np_utils.to_absolute_axis(-5, ndim=4)
 
-  with pytest.raises(np.AxisError):
+  with pytest.raises(np.exceptions.AxisError):
     assert np_utils.to_absolute_axis((0, 4), ndim=4)
 
 

@@ -157,7 +157,7 @@ def to_absolute_axis(axis: Axes, *, ndim: int) -> Axes:
     return tuple(range(ndim))
   elif isinstance(axis, int):
     if axis >= ndim or axis < -ndim:
-      raise enp.lazy.np.AxisError(
+      raise enp.lazy.np.exceptions.AxisError(
           axis=axis,
           ndim=ndim,
           # msg_prefix=
