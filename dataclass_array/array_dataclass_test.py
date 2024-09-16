@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import pickle
 from typing import Any
 
 import dataclass_array as dca
@@ -769,3 +770,15 @@ def test_class_getitem():
   assert Point[''] != Point
   assert Point[''] != Point['h w']
   assert Point[''] != Isometrie['']
+
+
+@enp.testing.parametrize_xnp()
+@pytest.mark.parametrize('batch_shape', [(), (1, 3)])
+def test_dataclass_pickle_unpickle(xnp: enp.NpModule, batch_shape: Shape):
+  expected = Point(
+      x=xnp.zeros(batch_shape, dtype=xnp.float32),
+      y=xnp.zeros(batch_shape, dtype=xnp.float32),
+  )
+  buffer = pickle.dumps(expected)
+  actual = pickle.loads(buffer)
+  dca.testing.assert_array_equal(actual, expected)

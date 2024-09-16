@@ -23,6 +23,8 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 
 ## [Unreleased]
 
+*   Add pickle support to `DataclassArray`.
+
 ## [1.5.2] - 2024-03-19
 
 *   Drop Python 3.10 support

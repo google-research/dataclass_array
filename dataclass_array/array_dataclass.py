@@ -798,6 +798,21 @@ class DataclassArray(metaclass=MetaDataclassArray):
       array_field_values: list[DcOrArray],
   ) -> _DcT:
     """`jax.tree_utils` support."""
+    return cls._tree_unflatten(
+        metadata=metadata,
+        array_field_values=array_field_values,
+        constructor=cls,
+    )
+
+  @classmethod
+  def _tree_unflatten(
+      cls: Type[_DcT],
+      *,
+      metadata: _TreeMetadata,
+      array_field_values: list[DcOrArray],
+      constructor: Callable[..., _DcT],
+  ) -> _DcT:
+    """Initialize a model after serialization."""
     array_field_kwargs = dict(
         zip(
             metadata.array_field_names,
@@ -813,7 +828,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
       else:
         non_init_fields[k] = v
 
-    self = cls(**array_field_kwargs, **init_fields)
+    self = constructor(**array_field_kwargs, **init_fields)
     # Currently it's not clear how to handle non-init fields so raise an error
     if non_init_fields:
       if set(non_init_fields) - self.__dca_non_init_fields__:
@@ -843,6 +858,23 @@ class DataclassArray(metaclass=MetaDataclassArray):
       components: list[DcOrArray],
   ) -> _DcT:
     return cls.tree_unflatten(metadata, components)
+
+  def __getstate__(self) -> tuple[_TreeMetadata, tuple[DcOrArray, ...]]:
+    components, metadata = self._tree_flatten()
+    return metadata, components
+
+  def __setstate__(self, state: tuple[_TreeMetadata, list[DcOrArray]]) -> None:
+
+    def constructor(**kwargs):
+      self.__init__(**kwargs)
+      return self
+
+    metadata, components = state
+    type(self)._tree_unflatten(
+        metadata=metadata,
+        array_field_values=components,
+        constructor=constructor,
+    )
 
   def _setattr(self, name: str, value: Any) -> None:
     """Like setattr, but support `frozen` dataclasses."""
@@ -1023,8 +1055,8 @@ class _ArrayFieldMetadata:
   Attributes:
     inner_shape_non_static: Inner shape. Can contain non-static dims (e.g.
       `(None, 3)`)
-    dtype: Type of the array. Can be `enp.dtypes.DType` or
-      `dca.DataclassArray` for nested arrays.
+    dtype: Type of the array. Can be `enp.dtypes.DType` or `dca.DataclassArray`
+      for nested arrays.
   """
 
   inner_shape_non_static: DynamicShape
