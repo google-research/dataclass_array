@@ -1,4 +1,4 @@
-# Copyright 2024 The dataclass_array Authors.
+# Copyright 2025 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1120,6 +1120,14 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
   @functools.cached_property
   def inner_shape(self) -> Shape:
     """Returns the the static shape resolved for the current value."""
+    # torch.func.vmap calls `tree_unflatten([0] * num_leaves)` internally,
+    # messing up shape inference.
+    if (
+        enp.lazy.has_torch
+        and isinstance(self.value, int)
+        and self.value == 0
+    ):
+      return ()
     if not self.inner_shape_non_static:
       return ()
     static_shape = self.full_shape[-len(self.inner_shape_non_static) :]
