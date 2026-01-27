@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import dataclasses
 import functools
+import sys
 import typing
 from typing import Any, Callable, ClassVar, Generic, Iterator, Optional, Set, Tuple, Type, TypeVar, Union
 
@@ -1120,14 +1121,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
   @functools.cached_property
   def inner_shape(self) -> Shape:
     """Returns the the static shape resolved for the current value."""
-    # torch.func.vmap calls `tree_unflatten([0] * num_leaves)` internally,
-    # messing up shape inference.
-    if (
-        enp.lazy.has_torch
-        and isinstance(self.value, int)
-        and self.value == 0
-    ):
-      return ()
+
     if not self.inner_shape_non_static:
       return ()
     static_shape = self.full_shape[-len(self.inner_shape_non_static) :]
@@ -1167,6 +1161,14 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     elif enp.array_spec.is_fake_array(self.value):
       # `etree.spec_like`, Flax summary, ShapeDtypeStruct, ... compatibility
       return True
+    # torch.func.vmap calls `tree_unflatten([0] * num_leaves)` internally.
+    elif (
+        enp.lazy.has_torch
+        and isinstance(self.value, int)
+        and self.value == 0
+        and _is_called_inside_torch_vmap()
+    ):
+      return True
     return False
 
   @property
@@ -1192,6 +1194,22 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
       return self.value.broadcast_to(final_shape)
     else:
       return self.xnp.broadcast_to(self.value, final_shape)
+
+
+def _is_called_inside_torch_vmap() -> bool:
+  """Returns `True` if the current call is inside a `torch.func.vmap`."""
+  frame = sys._getframe(1)  # pylint: disable=protected-access
+
+  while frame:
+    code = frame.f_code
+    if (
+        code.co_name == '_broadcast_to_and_flatten'
+        and code.co_filename.endswith('torch/utils/_pytree.py')
+    ):
+      return True
+    frame = frame.f_back
+
+  return False
 
 
 def _make_field_metadata(

@@ -262,6 +262,7 @@ parametrize_dataclass_arrays = pytest.mark.parametrize(
 @pytest.mark.parametrize(
     'x, y, shape',
     [
+        (0, 0, ()),
         (1, 2, ()),
         ([1, 2], [3, 4], (2,)),
         ([[1], [2]], [[3], [4]], (2, 1)),
