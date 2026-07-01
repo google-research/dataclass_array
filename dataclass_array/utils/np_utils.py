@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ def is_array(
 
 
 def asarray(
-    x: Union[DcOrArrayT, ArrayLike[Array['...']]],
+    x: Union[DcOrArrayT, ArrayLike[Array['...']]],  # pyrefly: ignore[not-a-type]
     *,
     xnp: enp.NpModule = None,
     dtype: Optional[DTypeArg] = None,
@@ -105,7 +105,7 @@ def asarray(
   # Potentially forward `None`, if optional is accepted
   if x is None:
     if optional:
-      return x
+      return x  # pyrefly: ignore[bad-return]
     else:
       raise ValueError('Expected array, got `None`')
 
@@ -120,10 +120,10 @@ def asarray(
         not isinstance(dtype, type) or not isinstance(x, dtype)
     ):
       raise TypeError(f'Expected {dtype}. Got: {type(x)}')
-    return x.as_xnp(xnp)
+    return x.as_xnp(xnp)  # pyrefly: ignore[bad-return]
 
   # Handle ndarray
-  dtype = enp.dtypes.DType.from_value(dtype)
+  dtype = enp.dtypes.DType.from_value(dtype)  # pyrefly: ignore[bad-assignment]
   return dtype.asarray(x, xnp=xnp, casting='all' if cast_dtype else 'none')
 
 

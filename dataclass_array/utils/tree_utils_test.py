@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ def test_tree_map():
 
   result = tree_utils.tree_map(
       map_fn,
-      {
+      {  # pyrefly: ignore[bad-argument-type]
           'a': 1,
           'b': {
               'c': 2,
@@ -50,12 +50,12 @@ def test_tree_map():
       },
   }
 
-  assert tree_utils.tree_map(map_fn, [1, 2, 3]) == [10, 20, 30]
-  assert tree_utils.tree_map(map_fn, (1, 2, 3)) == (10, 20, 30)
-  assert tree_utils.tree_map(map_fn, {}) == {}  # pylint: disable=g-explicit-bool-comparison
-  assert tree_utils.tree_map(map_fn, ()) == ()  # pylint: disable=g-explicit-bool-comparison
-  assert tree_utils.tree_map(map_fn, {'x': ([])}) == {'x': ([])}
-  assert tree_utils.tree_map(map_fn, 1) == 10
+  assert tree_utils.tree_map(map_fn, [1, 2, 3]) == [10, 20, 30]  # pyrefly: ignore[bad-argument-type]
+  assert tree_utils.tree_map(map_fn, (1, 2, 3)) == (10, 20, 30)  # pyrefly: ignore[bad-argument-type]
+  assert tree_utils.tree_map(map_fn, {}) == {}  # pylint: disable=g-explicit-bool-comparison  # pyrefly: ignore[bad-argument-type]
+  assert tree_utils.tree_map(map_fn, ()) == ()  # pylint: disable=g-explicit-bool-comparison  # pyrefly: ignore[bad-argument-type]
+  assert tree_utils.tree_map(map_fn, {'x': ([])}) == {'x': ([])}  # pyrefly: ignore[bad-argument-type]
+  assert tree_utils.tree_map(map_fn, 1) == 10  # pyrefly: ignore[bad-argument-type]
 
 
 def test_tree_map_multi_args():
@@ -72,7 +72,7 @@ def test_tree_map_multi_args():
 def test_tree_map_chex():
   """Test tree_map with chex dataclasses."""
 
-  assert tree_utils.tree_map(lambda x: x * 10, A(x=1, y=2)) == A(x=10, y=20)
+  assert tree_utils.tree_map(lambda x: x * 10, A(x=1, y=2)) == A(x=10, y=20)  # pyrefly: ignore[bad-argument-type, unsupported-operation]
 
   def add_fn(x, y):
     return x + y

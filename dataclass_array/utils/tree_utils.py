@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ _OutT = Any  # TypeVar('_OutT')
 
 
 def tree_map(  # pylint: disable=redefined-builtin
-    fn: Callable[[Unpack[Tree[_InsT]]], _OutT],
-    *trees: Unpack[Tree[_InsT]],
+    fn: Callable[[Unpack[Tree[_InsT]]], _OutT],  # pyrefly: ignore[bad-specialization]
+    *trees: Unpack[Tree[_InsT]],  # pyrefly: ignore[bad-specialization]
 ) -> Tree[_OutT]:
   """Apply a function recursively to each element of a nested data struct.
 
