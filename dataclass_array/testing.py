@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import numpy as np
 class Ray(array_dataclass.DataclassArray):
   """Dummy dataclass array for testing."""
 
-  pos: FloatArray[..., 3]
-  dir: FloatArray[..., 3]
+  pos: FloatArray[..., 3]  # pyrefly: ignore[not-a-type]
+  dir: FloatArray[..., 3]  # pyrefly: ignore[not-a-type]
 
 
 # TODO(epot): Should use `chex.assert_xyz` once dataclasses support DM `tree`

@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -344,7 +344,7 @@ def _vmap_method_np(
     outs.append(out)
 
   # Stack output back together
-  return tree_utils.tree_map(_stack, *outs)
+  return tree_utils.tree_map(_stack, *outs)  # pyrefly: ignore[bad-return]
 
 
 def _vmap_method_jax_torch(
@@ -455,7 +455,7 @@ def _stack(*vals: _OutT) -> _OutT:
   assert vals
   val = vals[0]
   if isinstance(val, array_dataclass.DataclassArray):
-    return ops.stack(vals, axis=0)
+    return ops.stack(vals, axis=0)  # pyrefly: ignore[bad-specialization]
   elif enp.lazy.is_array(val):
     return enp.lazy.np.stack(vals, axis=0)
   else:
@@ -474,9 +474,9 @@ def _unflatten(arrays: _OutT, *, batch_shape: Shape) -> _OutT:
       arrays, array_dataclass.DataclassArray
   ):
     # `len` because of b/198633198
-    assert len(arrays.shape)  # pylint: disable=g-explicit-length-test
-    assert arrays.shape[0] == batch_size
-    arrays = arrays.reshape(batch_shape + arrays.shape[1:])
+    assert len(arrays.shape)  # pylint: disable=g-explicit-length-test  # pyrefly: ignore[missing-attribute]
+    assert arrays.shape[0] == batch_size  # pyrefly: ignore[missing-attribute]
+    arrays = arrays.reshape(batch_shape + arrays.shape[1:])  # pyrefly: ignore[missing-attribute]
     return arrays
   else:
     raise TypeError(

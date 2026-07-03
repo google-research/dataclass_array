@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ _ORIGIN_TO_VISITOR = {
     None: _visit_leaf,  # Default origin
 }
 if sys.version_info >= (3, 10):
-  _ORIGIN_TO_VISITOR[types.UnionType] = _visit_union  # In Python 3.10+: x | y
+  _ORIGIN_TO_VISITOR[types.UnionType] = _visit_union  # In Python 3.10+: x | y  # pyrefly: ignore[unsupported-operation]
 
 
 def _get_leaf_types(hint: TypeAlias) -> list[type[Any]]:

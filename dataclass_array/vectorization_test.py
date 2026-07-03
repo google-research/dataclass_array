@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -152,9 +152,9 @@ def test_replace_dca(xnp: enp.NpModule):
   class DataclassWithNonInit(dca.DataclassArray):
     """Dataclass with a non-init (static) field."""
 
-    __dca_non_init_fields__ = ('x',)
+    __dca_non_init_fields__ = ('x',)  # pyrefly: ignore[bad-assignment]
 
-    y: FloatArray['*batch']
+    y: FloatArray['*batch']  # pyrefly: ignore[not-a-type]
     x: int = dataclasses.field(default=1, init=False)
 
     @dca.vectorize_method

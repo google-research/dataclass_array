@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ class DcaTest:
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
 class Point(dca.DataclassArray):
-  x: f32['*shape']
-  y: f32['*shape']
+  x: f32['*shape']  # pyrefly: ignore[not-a-type]
+  y: f32['*shape']  # pyrefly: ignore[not-a-type]
 
   @staticmethod
   def make(shape: Shape, xnp: enp.NpModule) -> Point:
@@ -77,8 +77,8 @@ class Point(dca.DataclassArray):
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
 class Isometrie(dca.DataclassArray):
-  r: f32['... 3 3']
-  t: i32[..., 2]
+  r: f32['... 3 3']  # pyrefly: ignore[not-a-type]
+  t: i32[..., 2]  # pyrefly: ignore[not-a-type]
 
   @staticmethod
   def make(shape: Shape, xnp: enp.NpModule) -> Isometrie:
@@ -198,8 +198,8 @@ class WithStatic(dca.DataclassArray):
 
   static: str
   nested_static: NestedOnlyStatic
-  x: f32['... 3']
-  y: Any = dca.field(shape=(2, 2), dtype=np.float32)
+  x: f32['... 3']  # pyrefly: ignore[not-a-type]
+  y: Any = dca.field(shape=(2, 2), dtype=np.float32)  # pyrefly: ignore[bad-argument-type]
 
   @staticmethod
   def make(shape: Shape, xnp: enp.NpModule) -> WithStatic:
@@ -410,7 +410,7 @@ def test_wrong_input_type():
   @dca.dataclass_array(broadcast=True, cast_dtype=True)
   class PointWrapper(dca.DataclassArray):
     pts: Point
-    rgb: f32['*shape 3']
+    rgb: f32['*shape 3']  # pyrefly: ignore[not-a-type]
 
   # ndarray instead of DataclassArray
   with pytest.raises(TypeError, match='Invalid PointWrapper.pts:'):
@@ -646,8 +646,8 @@ def test_vmap(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_cast(xnp: enp.NpModule):
   class PointNoCast(dca.DataclassArray):
-    x: FloatArray['*shape']
-    y: IntArray['*shape']
+    x: FloatArray['*shape']  # pyrefly: ignore[not-a-type]
+    y: IntArray['*shape']  # pyrefly: ignore[not-a-type]
 
   with pytest.raises(ValueError, match='Cannot cast float16'):
     PointNoCast(
@@ -668,8 +668,8 @@ def test_dataclass_params_no_cast(xnp: enp.NpModule):
 def test_dataclass_params_no_list(xnp: enp.NpModule):
   @dca.dataclass_array(cast_list=False)
   class PointNoList(dca.DataclassArray):
-    x: FloatArray['*shape']
-    y: IntArray['*shape']
+    x: FloatArray['*shape']  # pyrefly: ignore[not-a-type]
+    y: IntArray['*shape']  # pyrefly: ignore[not-a-type]
 
   with pytest.raises(TypeError, match='Could not infer numpy module'):
     PointNoList(
@@ -681,8 +681,8 @@ def test_dataclass_params_no_list(xnp: enp.NpModule):
 @enp.testing.parametrize_xnp()
 def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
   class PointNoBroadcast(dca.DataclassArray):
-    x: FloatArray['*shape']
-    y: IntArray['*shape']
+    x: FloatArray['*shape']  # pyrefly: ignore[not-a-type]
+    y: IntArray['*shape']  # pyrefly: ignore[not-a-type]
 
   with pytest.raises(ValueError, match='Cannot broadcast'):
     PointNoBroadcast(
@@ -695,8 +695,8 @@ def test_dataclass_params_no_broadcast(xnp: enp.NpModule):
 @pytest.mark.parametrize('batch_shape', [(), (1, 3)])
 def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
   class PointDynamicShape(dca.DataclassArray):
-    x: FloatArray[..., None, None]
-    y: IntArray['... 3 _']
+    x: FloatArray[..., None, None]  # pyrefly: ignore[not-a-type]
+    y: IntArray['... 3 _']  # pyrefly: ignore[not-a-type]
 
   p = PointDynamicShape(
       x=xnp.zeros(batch_shape + (2, 3), dtype=xnp.float32),
@@ -751,8 +751,8 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
 @pytest.mark.parametrize('batch_shape', [(1,), (3,)])
 def test_concatenate(xnp: enp.NpModule, batch_shape: Shape):
   class TestConcatenateClass(dca.DataclassArray):
-    x: FloatArray['*shape 3']
-    y: FloatArray['*shape']
+    x: FloatArray['*shape 3']  # pyrefly: ignore[not-a-type]
+    y: FloatArray['*shape']  # pyrefly: ignore[not-a-type]
 
   p = TestConcatenateClass(
       x=xnp.zeros(batch_shape + (3,), dtype=xnp.float32),

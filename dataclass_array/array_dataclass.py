@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ def array_field(
   # TODO(epot): Validate shape, dtype
   dca_field = _ArrayFieldMetadata(
       inner_shape_non_static=shape,
-      dtype=dtype,
+      dtype=dtype,  # pyrefly: ignore[bad-argument-type]
   )
   return dataclasses.field(**field_kwargs, metadata={_METADATA_KEY: dca_field})
 
@@ -148,7 +148,7 @@ class MetaDataclassArray(type):
   # TODO(b/204422756): We cannot use `__class_getitem__` due to b/204422756
   def __getitem__(cls, spec):
     # Not clear how this would interact if cls is also a `Generic`
-    return Annotated[cls, field_utils.ShapeAnnotation(spec)]
+    return Annotated[cls, field_utils.ShapeAnnotation(spec)]  # pyrefly: ignore[not-a-type]
 
 
 # TODO(epot): Restore once pytype support this
@@ -386,7 +386,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     indices = _to_absolute_indices(indices, shape=self.shape)
     return self._map_field(
         array_fn=lambda f: f.value[indices],
-        dc_fn=lambda f: f.value[indices],
+        dc_fn=lambda f: f.value[indices],  # pyrefly: ignore[bad-argument-type]
     )
 
   # _DcT[n *d] -> Iterator[_DcT[*d]]
@@ -454,7 +454,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
   def map_field(
       self: _DcT,
-      fn: Callable[[Array['*din']], Array['*dout']],
+      fn: Callable[[Array['*din']], Array['*dout']],  # pyrefly: ignore[not-a-type]
   ) -> _DcT:
     """Apply a transformation on all arrays from the fields."""
     return self._map_field(  # pylint: disable=protected-access
@@ -659,7 +659,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
           new_value = np_utils.asarray(
               f.value,
               xnp=xnp,
-              dtype=f.dtype,
+              dtype=f.dtype,  # pyrefly: ignore[bad-argument-type]
               cast_dtype=self.__dca_params__.cast_dtype,
           )
         self._setattr(f.name, new_value)
@@ -740,7 +740,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
   def _map_field(
       self: _DcT,
       *,
-      array_fn: Callable[[_ArrayField[Array['*din']]], Array['*dout']],
+      array_fn: Callable[[_ArrayField[Array['*din']]], Array['*dout']],  # pyrefly: ignore[not-a-type]
       dc_fn: Optional[Callable[[_ArrayField[_DcT]], _DcT]],
       _inplace: bool = False,
   ) -> _DcT:
@@ -758,7 +758,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
     def _apply_field_dn(f: _ArrayField):
       if f.is_dataclass:  # Recurse on dataclasses
-        return dc_fn(f)  # pylint: disable=protected-access
+        return dc_fn(f)  # pylint: disable=protected-access  # pyrefly: ignore[not-callable]
       else:
         return array_fn(f)
 
@@ -881,7 +881,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     """Like setattr, but support `frozen` dataclasses."""
     object.__setattr__(self, name, value)
 
-  def assert_same_xnp(self, x: Union[Array[...], DataclassArray]) -> None:
+  def assert_same_xnp(self, x: Union[Array[...], DataclassArray]) -> None:  # pyrefly: ignore[not-a-type]
     """Assert the given array is of the same type as the current object."""
     xnp = np_utils.get_xnp(x)
     if xnp is not self.xnp:
@@ -942,7 +942,7 @@ def _init_cls(self: DataclassArray) -> None:
     # is propagated by the various ops.
     dca_fields_metadata[_DUMMY_ARRAY_FIELD] = _ArrayFieldMetadata(  # pytype: disable=wrong-arg-types
         inner_shape_non_static=(),
-        dtype=np.float32,
+        dtype=np.float32,  # pyrefly: ignore[bad-argument-type]
     )
     default_dummy_array = np.zeros((), dtype=np.float32)
     _add_field_to_dataclass(
@@ -1032,7 +1032,7 @@ def _to_absolute_indices(indices: _Indices, *, shape: Shape) -> _Indices:
   start_elems = indices[:ellipsis_index]
   end_elems = indices[ellipsis_index + 1 :]
   ellipsis_replacement = [slice(None)] * (len(shape) - valid_count)
-  return (*start_elems, *ellipsis_replacement, *end_elems)
+  return (*start_elems, *ellipsis_replacement, *end_elems)  # pyrefly: ignore[bad-return]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -1116,7 +1116,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     """Access the `host.<field-name>.shape`."""
     # TODO(b/198633198): We need to convert to tuple because TF evaluate
     # empty shapes to True `bool(shape) == True` when `shape=()`
-    return tuple(self.value.shape)
+    return tuple(self.value.shape)  # pyrefly: ignore[bad-return, missing-attribute]
 
   @functools.cached_property
   def inner_shape(self) -> Shape:
@@ -1124,7 +1124,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
 
     if not self.inner_shape_non_static:
       return ()
-    static_shape = self.full_shape[-len(self.inner_shape_non_static) :]
+    static_shape = self.full_shape[-len(self.inner_shape_non_static) :]  # pyrefly: ignore[unsupported-operation]
 
     def err_msg() -> ValueError:
       return ValueError(
@@ -1177,8 +1177,8 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     if not self.inner_shape_non_static:
       shape = self.full_shape
     else:
-      shape = self.full_shape[: -len(self.inner_shape_non_static)]
-    return shape
+      shape = self.full_shape[: -len(self.inner_shape_non_static)]  # pyrefly: ignore[unsupported-operation]
+    return shape  # pyrefly: ignore[bad-return]
 
   def assert_shape(self) -> None:
     if self.host_shape + self.inner_shape != self.full_shape:
@@ -1191,7 +1191,7 @@ class _ArrayField(_ArrayFieldMetadata, Generic[DcOrArrayT]):
     """Broadcast the host_shape."""
     final_shape = shape + self.inner_shape
     if self.is_dataclass:
-      return self.value.broadcast_to(final_shape)
+      return self.value.broadcast_to(final_shape)  # pyrefly: ignore[missing-attribute]
     else:
       return self.xnp.broadcast_to(self.value, final_shape)
 
@@ -1214,7 +1214,7 @@ def _is_called_inside_torch_vmap() -> bool:
 
 def _make_field_metadata(
     field: dataclasses.Field[Any],
-    hints: dict[str, TypeAlias],
+    hints: dict[str, TypeAlias],  # pyrefly: ignore[invalid-annotation]
 ) -> Optional[_ArrayFieldMetadata]:
   """Make the array field class."""
   # TODO(epot): One possible confusion is if user define
@@ -1233,7 +1233,7 @@ def _make_field_metadata(
   return field_metadata
 
 
-def _type_to_field_metadata(hint: TypeAlias) -> Optional[_ArrayFieldMetadata]:
+def _type_to_field_metadata(hint: TypeAlias) -> Optional[_ArrayFieldMetadata]:  # pyrefly: ignore[invalid-annotation]
   """Converts type hint to extract `inner_shape`, `dtype`."""
   array_type = type_parsing.get_array_type(hint)
 

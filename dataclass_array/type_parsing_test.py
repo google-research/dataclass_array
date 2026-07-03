@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ Ray = dca.testing.Ray
 
 
 class Camera(dca.DataclassArray):
-  pos: FloatArray[..., 3]
-  dir: FloatArray[..., 3]
+  pos: FloatArray[..., 3]  # pyrefly: ignore[not-a-type]
+  dir: FloatArray[..., 3]  # pyrefly: ignore[not-a-type]
 
 
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ def test_get_leaf_types(hint, expected):
         (Union[Ray, Camera, None], _DS(dca.DataclassArray, '...')),
         (Union[Ray, int], None),
         (Union[Ray, int, None], None),
-        (Union[f32[3, 3], int, None], None),
+        (Union[f32[3, 3], int, None], None),  # pyrefly: ignore[not-a-type]
         (List[int], None),
         (List[Ray], None),
         (f32[3, 3], f32[3, 3]),
@@ -89,10 +89,10 @@ def test_from_hint(hint, expected):
 
 def test_get_array_type_error():
   with pytest.raises(NotImplementedError):
-    type_parsing.get_array_type(Union[Ray, f32[3, 3]])
+    type_parsing.get_array_type(Union[Ray, f32[3, 3]])  # pyrefly: ignore[not-a-type]
 
   with pytest.raises(NotImplementedError):
-    type_parsing.get_array_type(Union[FloatArray[..., 3], f32[3, 3]])
+    type_parsing.get_array_type(Union[FloatArray[..., 3], f32[3, 3]])  # pyrefly: ignore[not-a-type]
 
 
 @pytest.mark.parametrize(

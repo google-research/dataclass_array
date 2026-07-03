@@ -1,4 +1,4 @@
-# Copyright 2025 The dataclass_array Authors.
+# Copyright 2026 The dataclass_array Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ def _ops_base(
             int,
             Any,  # array_dataclass._ArrayField[Array['*din']],
         ],
-        Array['*dout'],
+        Array['*dout'],  # pyrefly: ignore[not-a-type]
     ],
     dc_fn: Optional[
         Callable[
@@ -73,7 +73,7 @@ def _ops_base(
   xnp = first_arr.xnp
   # If axis < 0, normalize the axis such as the last axis is before the inner
   # shape
-  axis = np_utils.to_absolute_axis(axis, ndim=first_arr.ndim + 1)
+  axis = np_utils.to_absolute_axis(axis, ndim=first_arr.ndim + 1)  # pyrefly: ignore[bad-assignment]
 
   # Iterating over only the fields of the `first_arr` will skip optional fields
   # if those are not set in `first_arr`, even if they are present in others.
@@ -82,7 +82,7 @@ def _ops_base(
   # Similarly, static values will be the ones from the first element.
   merged_arr = first_arr._map_field(  # pylint: disable=protected-access
       array_fn=functools.partial(array_fn, xnp, axis),
-      dc_fn=functools.partial(dc_fn, xnp, axis),
+      dc_fn=functools.partial(dc_fn, xnp, axis),  # pyrefly: ignore[bad-argument-type]
   )
   return merged_arr
 
