@@ -38,8 +38,8 @@ _OutT = Any  # TypeVar('_OutT')
 
 
 def tree_map(  # pylint: disable=redefined-builtin
-    fn: Callable[[Unpack[Tree[_InsT]]], _OutT],
-    *trees: Unpack[Tree[_InsT]],
+    fn: Callable[[Unpack[Tree[_InsT]]], _OutT],  # pyrefly: ignore[bad-specialization]
+    *trees: Unpack[Tree[_InsT]],  # pyrefly: ignore[bad-specialization]
 ) -> Tree[_OutT]:
   """Apply a function recursively to each element of a nested data struct.
 
