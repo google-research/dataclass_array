@@ -124,7 +124,7 @@ def asarray(
 
   # Handle ndarray
   dtype = enp.dtypes.DType.from_value(dtype)  # pyrefly: ignore[bad-assignment]
-  return dtype.asarray(x, xnp=xnp, casting='all' if cast_dtype else 'none')
+  return dtype.asarray(x, xnp=xnp, casting='all' if cast_dtype else 'none')  # pyrefly: ignore[missing-attribute]
 
 
 def _assert_valid_xnp_cast(from_: enp.NpModule, to: enp.NpModule) -> None:
