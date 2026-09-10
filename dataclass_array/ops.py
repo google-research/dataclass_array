@@ -82,7 +82,7 @@ def _ops_base(
   # Similarly, static values will be the ones from the first element.
   merged_arr = first_arr._map_field(  # pylint: disable=protected-access
       array_fn=functools.partial(array_fn, xnp, axis),
-      dc_fn=functools.partial(dc_fn, xnp, axis),  # pyrefly: ignore[bad-argument-type]
+      dc_fn=functools.partial(dc_fn, xnp, axis),  # pyrefly: ignore[bad-argument-type, not-callable]
   )
   return merged_arr
 
