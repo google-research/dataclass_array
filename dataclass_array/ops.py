@@ -30,6 +30,7 @@ def _ops_base(
     arrays: Iterable[DcT],
     *,
     axis: int,
+    new_axis: bool,
     array_fn: Callable[
         [
             enp.NpModule,
@@ -73,7 +74,10 @@ def _ops_base(
   xnp = first_arr.xnp
   # If axis < 0, normalize the axis such as the last axis is before the inner
   # shape
-  axis = np_utils.to_absolute_axis(axis, ndim=first_arr.ndim + 1)  # pyrefly: ignore[bad-assignment]
+  ndim = first_arr.ndim + int(new_axis)
+  axis = np_utils.to_absolute_axis(
+      axis, ndim=ndim
+  )  # pyrefly: ignore[bad-assignment]
 
   # Iterating over only the fields of the `first_arr` will skip optional fields
   # if those are not set in `first_arr`, even if they are present in others.
@@ -96,6 +100,7 @@ def stack(
   return _ops_base(
       arrays,
       axis=axis,
+      new_axis=True,
       array_fn=lambda xnp, axis, f: xnp.stack(  # pylint: disable=g-long-lambda
           [getattr(arr, f.name) for arr in arrays], axis=axis
       ),
@@ -111,6 +116,7 @@ def concat(arrays: Iterable[DcT], *, axis: int = 0) -> DcT:
   return _ops_base(
       arrays,
       axis=axis,
+      new_axis=False,
       array_fn=lambda xnp, axis, f: xnp.concatenate(  # pylint: disable=g-long-lambda
           [getattr(arr, f.name) for arr in arrays], axis=axis
       ),

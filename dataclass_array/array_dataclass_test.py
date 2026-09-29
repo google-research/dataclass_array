@@ -748,20 +748,57 @@ def test_dataclass_none_shape(xnp: enp.NpModule, batch_shape: Shape):
 
 
 @enp.testing.parametrize_xnp()
-@pytest.mark.parametrize('batch_shape', [(1,), (3,)])
-def test_concatenate(xnp: enp.NpModule, batch_shape: Shape):
+@pytest.mark.parametrize(
+    'batch_shape,axis',
+    [
+        ((1,), 0),
+        ((3,), 0),
+        ((3,), -1),
+        ((2, 3), 0),
+        ((2, 3), 1),
+        ((2, 3), -1),
+        ((2, 3), -2),
+    ],
+)
+def test_concatenate(xnp: enp.NpModule, batch_shape: Shape, axis: int):
   class TestConcatenateClass(dca.DataclassArray):
     x: FloatArray['*shape 3']  # pyrefly: ignore[not-a-type]
     y: FloatArray['*shape']  # pyrefly: ignore[not-a-type]
 
-  p = TestConcatenateClass(
-      x=xnp.zeros(batch_shape + (3,), dtype=xnp.float32),
-      y=xnp.zeros(batch_shape, dtype=xnp.float32),
+  x = np.arange(np.prod(batch_shape) * 3, dtype=np.float32).reshape(
+      batch_shape + (3,)
+  )
+  y = np.arange(np.prod(batch_shape), dtype=np.float32).reshape(batch_shape)
+  p = TestConcatenateClass(x=xnp.asarray(x), y=xnp.asarray(y))
+  p2 = p.replace(x=p.x + 100, y=p.y + 100)
+  result = dca.concat([p, p2], axis=axis)
+  batch_axis = axis % len(batch_shape)
+  expected_shape = list(batch_shape)
+  expected_shape[batch_axis] *= 2
+  assert result.shape == tuple(expected_shape)
+  assert result.xnp is xnp
+  np.testing.assert_array_equal(
+      result.x, np.concatenate([x, x + 100], axis=batch_axis)
+  )
+  np.testing.assert_array_equal(
+      result.y, np.concatenate([y, y + 100], axis=batch_axis)
   )
 
-  p_concatenated = dca.concat([p, p, p])
-  assert p_concatenated.x.shape == tuple(x * 3 for x in batch_shape) + (3,)
-  assert p_concatenated.y.shape == tuple(x * 3 for x in batch_shape)
+
+@enp.testing.parametrize_xnp()
+@pytest.mark.parametrize('axis', [0, 1, -1, -2])
+def test_concatenate_nested_batch_axes(xnp: enp.NpModule, axis: int):
+  p = Nested.make((2, 3), xnp)
+  expected_shape = (4, 3) if axis % 2 == 0 else (2, 6)
+  result = dca.concat([p, p], axis=axis)
+  dca.testing.assert_array_equal(result, Nested.make(expected_shape, xnp))
+
+
+@pytest.mark.parametrize('axis', [-3, 2, 3])
+def test_concatenate_rejects_non_batch_axes(axis: int):
+  p = Isometrie.make((2, 3), np)
+  with pytest.raises(np.exceptions.AxisError):
+    dca.concat([p, p], axis=axis)
 
 
 def test_class_getitem():
