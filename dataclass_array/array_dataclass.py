@@ -46,7 +46,7 @@ lazy = enp.lazy
 _DcT = TypeVar('_DcT', bound='DataclassArray')
 
 # Any valid numpy indices slice ([x], [x:y], [:,...], ...)
-_IndiceItem = Union[type(Ellipsis), None, int, slice, Any]
+_IndiceItem = Union[type(Ellipsis), None, int, slice, Any]  # pyrefly: ignore[invalid-annotation]
 _Indices = Tuple[_IndiceItem]  # Normalized slicing
 _IndicesArg = Union[_IndiceItem, _Indices]
 
