@@ -93,6 +93,7 @@ def stack(
     axis: int = 0,
 ) -> DcT:  # _DcT['len(arrays) *shape']:
   """Stack dataclasses together."""
+  arrays = list(arrays)
   return _ops_base(
       arrays,
       axis=axis,
@@ -108,6 +109,7 @@ def stack(
 
 def concat(arrays: Iterable[DcT], *, axis: int = 0) -> DcT:
   """Concatenate dataclasses together."""
+  arrays = list(arrays)
   return _ops_base(
       arrays,
       axis=axis,
