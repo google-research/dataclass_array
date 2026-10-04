@@ -1028,7 +1028,7 @@ def _to_absolute_indices(indices: _Indices, *, shape: Shape) -> _Indices:
     )
   if not ellipsis_count:
     return indices
-  ellipsis_index = indices.index(Ellipsis)
+  ellipsis_index = next(i for i, elem in enumerate(indices) if elem is Ellipsis)
   start_elems = indices[:ellipsis_index]
   end_elems = indices[ellipsis_index + 1 :]
   ellipsis_replacement = [slice(None)] * (len(shape) - valid_count)
