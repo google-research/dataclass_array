@@ -26,7 +26,7 @@ from typing import Any, Callable, TypeVar
 
 from etils import epy
 from etils.etree.typing import Tree  # pylint: disable=g-importing-member
-from typing_extensions import TypeVarTuple, Unpack  # pytype: disable=not-supported-yet  # pylint: disable=g-multiple-import
+from typing_extensions import TypeVarTuple, Unpack  # pylint: disable=g-multiple-import
 
 # TODO(epot): Remove once pytype support `Unpack`
 del TypeVar, TypeVarTuple, Unpack

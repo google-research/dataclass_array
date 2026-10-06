@@ -204,7 +204,7 @@ class BoundArgs(Generic[_ArgT, _OutT]):
   ) -> BoundArgs[_NewArgT, _OutT]:
     """Apply validation/modification to all `BoundArg`."""
 
-    def _fn(arg: BoundArg[_ArgT]) -> _NewArgT:  # pytype: disable=invalid-annotation
+    def _fn(arg: BoundArg[_ArgT]) -> _NewArgT:
       try:
         return fn(arg)
       except Exception as e:  # pylint: disable=broad-except
@@ -220,9 +220,9 @@ class BoundArgs(Generic[_ArgT, _OutT]):
   ) -> BoundArgs[_NewArgT, _OutT]:
     bound_args = inspect.BoundArguments(
         signature=self.bound_args.signature,
-        arguments=new_values,  # pytype: disable=wrong-arg-types
+        arguments=new_values,
     )
-    return self.replace(bound_args=bound_args)  # pytype: disable=attribute-error
+    return self.replace(bound_args=bound_args)  # pyrefly: ignore[missing-attribute]
 
 
 @edc.dataclass
