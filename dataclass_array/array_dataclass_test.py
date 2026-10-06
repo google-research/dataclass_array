@@ -456,6 +456,23 @@ def test_isometrie_wrong_input():
     p.reshape((2, 2))
 
 
+@enp.testing.parametrize_xnp()
+@pytest.mark.parametrize('native_index', [False, True])
+def test_array_index_before_ellipsis(xnp: enp.NpModule, native_index):
+  rotations = np.arange(3 * 2 * 3 * 3, dtype=np.float32).reshape(3, 2, 3, 3)
+  translations = np.arange(3 * 2 * 2, dtype=np.int32).reshape(3, 2, 2)
+  transforms = Isometrie(r=xnp.asarray(rotations), t=xnp.asarray(translations))
+  indices = np.array([2, 0])
+  if native_index:
+    indices = xnp.asarray(indices)
+
+  selected = transforms[indices, ...]
+
+  Isometrie.assert_val(selected, (2, 2), xnp=xnp)
+  np.testing.assert_array_equal(selected.r, rotations[[2, 0]])
+  np.testing.assert_array_equal(selected.t, translations[[2, 0]])
+
+
 @pytest.mark.parametrize(
     'batch_shape, indices',
     [
@@ -463,6 +480,12 @@ def test_isometrie_wrong_input():
         ((2,), np.index_exp[...]),
         ((3, 2), np.index_exp[...]),
         ((3, 2), np.index_exp[0]),
+        ((3, 2), np.index_exp[np.array([2, 0]), ...]),
+        ((3, 2), np.index_exp[np.array([True, False, True]), ...]),
+        ((3, 2), np.index_exp[np.array([], dtype=int), ...]),
+        ((3, 2), np.index_exp[None, np.array([2, 0]), ..., None]),
+        ((3, 2), np.index_exp[np.array([2, 0]), ..., 1]),
+        ((3, 2), np.index_exp[..., np.array([1, 0])]),
         ((3, 2), np.index_exp[0, ...]),
         ((3, 2), np.index_exp[..., 0]),
         ((3, 2), np.index_exp[0, 0]),
