@@ -104,11 +104,9 @@ class Isometrie(dca.DataclassArray):
 
 @dca.dataclass_array(broadcast=True, cast_dtype=True)
 class Nested(dca.DataclassArray):
-  # pytype: disable=annotation-type-mismatch
   iso: Isometrie
   iso_batched: Isometrie['*batch_shape 3 7']
-  pt: Point = dca.field(shape=(3,), dtype=Point)
-  # pytype: enable=annotation-type-mismatch
+  pt: Point = dca.field(shape=(3,), dtype=Point)  # pyrefly: ignore[bad-assignment]
 
   @staticmethod
   def make(shape: Shape, xnp: enp.NpModule) -> Nested:

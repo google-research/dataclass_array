@@ -92,6 +92,6 @@ def skip_vmap_unavailable(xnp: enp.NpModule, *, skip_torch: str = '') -> None:
     if skip_torch:
       skip = True
   if skip:
-    import pytest  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
+    import pytest  # pylint: disable=g-import-not-at-top  # pyrefly: ignore[missing-import]
 
     pytest.skip('Vectorization not supported yet with TF / Torch')

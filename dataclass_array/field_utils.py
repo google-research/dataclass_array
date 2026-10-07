@@ -52,7 +52,7 @@ class DataclassWithShape:
     # Extract the shape
     shape = '...'
     if typing_extensions.get_origin(hint) is typing_extensions.Annotated:
-      shapes = [a for a in hint.__metadata__ if isinstance(a, ShapeAnnotation)]  # pytype: disable=attribute-error
+      shapes = [a for a in hint.__metadata__ if isinstance(a, ShapeAnnotation)]
       if len(shapes) > 1:
         raise ValueError(f'Conflicting annotations for {hint}')
       elif len(shapes) == 1:

@@ -103,4 +103,4 @@ def get_inner_shape(shape_str: str) -> _Shape:
   if not all(isinstance(dim, (int, type(None))) for dim in inner_shape):
     raise ValueError('Only static or None dimensions supported.')
 
-  return inner_shape  # pytype: disable=bad-return-type
+  return inner_shape  # pyrefly: ignore[bad-return]

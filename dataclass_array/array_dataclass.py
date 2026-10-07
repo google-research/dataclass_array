@@ -474,7 +474,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     }
 
     # Create the new object
-    new_self = dataclasses.replace(self, **init_kwargs)  # pytype: disable=wrong-arg-types  # re-none
+    new_self = dataclasses.replace(self, **init_kwargs)  # pyrefly: ignore[bad-specialization]
 
     # TODO(epot): Could try to unify logic bellow with `tree_unflatten`
 
@@ -595,7 +595,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     # `assert_same_structure`
     if enp.lazy.has_tf:
       # pylint: disable=g-direct-tensorflow-import,g-import-not-at-top
-      from tensorflow.python.util import nest_util  # pytype: disable=import-error
+      from tensorflow.python.util import nest_util  # pyrefly: ignore[missing-import]
       # pylint: enable=g-direct-tensorflow-import,g-import-not-at-top
 
       if any(f.value is nest_util._DOT for f in self._array_fields):  # pylint: disable=protected-access,not-an-iterable
@@ -670,7 +670,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
     self._map_field(
         array_fn=_cast_field,
-        dc_fn=_cast_field,  # pytype: disable=wrong-arg-types
+        dc_fn=_cast_field,  # pyrefly: ignore[bad-argument-type]
         _inplace=True,
     )
     return xnp
@@ -722,7 +722,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
 
     self._map_field(
         array_fn=_broadcast_field,
-        dc_fn=_broadcast_field,  # pytype: disable=wrong-arg-types
+        dc_fn=_broadcast_field,  # pyrefly: ignore[bad-argument-type]
         _inplace=True,
     )
     return final_shape
@@ -786,7 +786,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
         array_field_names=list(self._all_array_fields.keys()),
         non_array_field_kwargs={
             f.name: getattr(self, f.name)
-            for f in dataclasses.fields(self)  # pytype: disable=wrong-arg-types  # re-none
+            for f in dataclasses.fields(self)  # pyrefly: ignore[bad-argument-type]
             if f.name not in self._all_array_fields  # pylint: disable=unsupported-membership-test
         },
     )
@@ -822,7 +822,7 @@ class DataclassArray(metaclass=MetaDataclassArray):
     )
     init_fields = {}
     non_init_fields = {}
-    fields = {f.name: f for f in dataclasses.fields(cls)}  # pytype: disable=wrong-arg-types  # re-none
+    fields = {f.name: f for f in dataclasses.fields(cls)}  # pyrefly: ignore[bad-argument-type]
     for k, v in metadata.non_array_field_kwargs.items():
       if fields[k].init:
         init_fields[k] = v
@@ -923,7 +923,7 @@ def _init_cls(self: DataclassArray) -> None:
 
   # TODO(epot): Remove restriction once pytype supports `datclass_transform`
   # and `dca` automatically apply the `@dataclasses.dataclass`
-  if _DUMMY_ARRAY_FIELD in cls.__dataclass_fields__:  # pytype: disable=attribute-error
+  if _DUMMY_ARRAY_FIELD in cls.__dataclass_fields__:  # pyrefly: ignore[missing-attribute]
     raise NotImplementedError(
         'Suclassing of DataclassArray with no array field is not supported '
         'after an instance of the class was created. Error raised for '
@@ -931,7 +931,7 @@ def _init_cls(self: DataclassArray) -> None:
     )
 
   dca_fields_metadata = {
-      f.name: _make_field_metadata(f, hints) for f in dataclasses.fields(cls)  # pytype: disable=wrong-arg-types
+      f.name: _make_field_metadata(f, hints) for f in dataclasses.fields(cls)  # pyrefly: ignore[bad-argument-type]
   }
   dca_fields_metadata = {  # Filter `None` values (static fields)
       k: v for k, v in dca_fields_metadata.items() if v is not None
@@ -940,7 +940,7 @@ def _init_cls(self: DataclassArray) -> None:
     # DataclassArray without any array fields
     # Hack: To support `.xnp`, `.shape`, we add a dummy empty field which
     # is propagated by the various ops.
-    dca_fields_metadata[_DUMMY_ARRAY_FIELD] = _ArrayFieldMetadata(  # pytype: disable=wrong-arg-types
+    dca_fields_metadata[_DUMMY_ARRAY_FIELD] = _ArrayFieldMetadata(
         inner_shape_non_static=(),
         dtype=np.float32,  # pyrefly: ignore[bad-argument-type]
     )
@@ -966,7 +966,7 @@ def _add_field_to_dataclass(cls, name: str, default: Any) -> None:
     raise ValueError(
         f'{cls.__name__} is not a `@dataclasses.dataclass(frozen=True)`'
     )
-  assert name not in cls.__dataclass_fields__  # pytype: disable=attribute-error
+  assert name not in cls.__dataclass_fields__
 
   # Ideally, we want init=False, so sub-dataclass ignore this field
   # but this makes `.replace` fail
@@ -974,8 +974,8 @@ def _add_field_to_dataclass(cls, name: str, default: Any) -> None:
   field.__set_name__(cls, name)
   field.name = name
   field.type = Any
-  field._field_type = dataclasses._FIELD  # pylint: disable=protected-access  # pytype: disable=module-attr
-  cls.__dataclass_fields__[name] = field  # pytype: disable=attribute-error
+  field._field_type = dataclasses._FIELD  # pylint: disable=protected-access  # pyrefly: ignore[missing-attribute]
+  cls.__dataclass_fields__[name] = field
 
   original_init = cls.__init__
 

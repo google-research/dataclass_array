@@ -125,7 +125,7 @@ def vectorize_method(
   """
   # Called as decorator with options (`@dca.vectorize_method(**options)`)
   if fn is None:
-    return functools.partial(vectorize_method, static_args=static_args)  # pytype: disable=bad-return-type
+    return functools.partial(vectorize_method, static_args=static_args)
 
   # Signature util also make sure explicit error message are raised (e.g.
   # `Error in <fn> for arg <arg-name>` )
@@ -385,7 +385,7 @@ def _torch_vmap_cached(fn: _FnT, *, in_axes) -> _FnT:
     vmap = enp.lazy.torch.func.vmap
   else:
     try:
-      import functorch  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
+      import functorch  # pylint: disable=g-import-not-at-top  # pyrefly: ignore[missing-import]
     except ImportError as e:
       epy.reraise(
           e, suffix='. vectorization with `pytorch<2` require functorch'
